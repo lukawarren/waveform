@@ -2,12 +2,12 @@ using Gtk 4.0;
 using Adw 1;
 
 Adw.Window window {
-    width-request: 300;
+    width-request: 400;
     height-request: 300;
 
     content: Adw.ToolbarView {
         [top]
-        Adw.HeaderBar header_bar {
+        Adw.HeaderBar {
             title-widget: Adw.ViewSwitcher {
                 stack: stack;
                 policy: wide;
@@ -16,22 +16,64 @@ Adw.Window window {
 
         content: Adw.ViewStack stack {
             Adw.ViewStackPage {
-                name: 'playlist';
-                title: 'Playlist';
-                icon-name: 'view-list-symbolic';
+                name: "playlist";
+                title: "Playlist";
+                icon-name: "view-list-symbolic";
 
-                child: Adw.StatusPage {
-                    title: 'Welcome!';
+                child: Adw.ToolbarView {
+                    content: Gtk.ScrolledWindow {
+                        Gtk.Viewport {
+                            Gtk.Box {
+                                orientation: vertical;
+                                Adw.Clamp {
+                                    margin-start: 6;
+                                    margin-end: 6;
+                                    margin-top: 6;
+                                    margin-bottom: 6;
+                                    Adw.PreferencesGroup {
+                                        title: "Current playlist";
+                                        Adw.ActionRow {
+                                            title: "Playboy Carti - Magnolia (Skeler Remix)";
+                                            subtitle: "3:24";
+                                            Gtk.Button {
+                                                icon-name: "edit-delete-symbolic";
+                                                valign: center;
+                                                styles ["flat"]
+                                            }
+                                        }
+                                        Adw.ActionRow {
+                                            title: "Playboy Carti - Magnolia (Skeler Remix)";
+                                            subtitle: "3:24";
+                                            Gtk.Button {
+                                                icon-name: "edit-delete-symbolic";
+                                                valign: center;
+                                                styles ["flat"]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    };
+
+                    [bottom]
+                    Gtk.ActionBar {
+                        [end]
+                        Gtk.Button {
+                            icon-name: "list-add-symbolic";
+                            styles ["circular", "raised"]
+                        }
+                    }
                 };
             }
 
             Adw.ViewStackPage {
-                name: 'playback';
-                title: 'Playback';
-                icon-name: 'view-list-symbolic';
+                name: "playback";
+                title: "Playback";
+                icon-name: "media-playback-start-symbolic";
 
                 child: Adw.StatusPage {
-                    title: 'Test!';
+                    title: "I was rebuilt!";
                 };
             }
         };

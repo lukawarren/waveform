@@ -21,7 +21,7 @@ static void on_activate(GtkApplication *app)
 int main(int argc, char** argv)
 {
     g_autoptr(AdwApplication) app = NULL;
-    app = adw_application_new("org.example.luka", G_APPLICATION_DEFAULT_FLAGS);
+    app = adw_application_new("com.github.lukawarren.waveform", G_APPLICATION_DEFAULT_FLAGS);
     g_signal_connect(app, "activate", G_CALLBACK(on_activate), NULL);
     return g_application_run(G_APPLICATION(app), argc, argv);
 }
