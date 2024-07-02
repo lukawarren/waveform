@@ -1,0 +1,39 @@
+using Gtk 4.0;
+using Adw 1;
+
+Adw.Window window {
+    width-request: 300;
+    height-request: 300;
+
+    content: Adw.ToolbarView {
+        [top]
+        Adw.HeaderBar header_bar {
+            title-widget: Adw.ViewSwitcher {
+                stack: stack;
+                policy: wide;
+            };
+        }
+
+        content: Adw.ViewStack stack {
+            Adw.ViewStackPage {
+                name: 'playlist';
+                title: 'Playlist';
+                icon-name: 'view-list-symbolic';
+
+                child: Adw.StatusPage {
+                    title: 'Welcome!';
+                };
+            }
+
+            Adw.ViewStackPage {
+                name: 'playback';
+                title: 'Playback';
+                icon-name: 'view-list-symbolic';
+
+                child: Adw.StatusPage {
+                    title: 'Test!';
+                };
+            }
+        };
+    };
+}
