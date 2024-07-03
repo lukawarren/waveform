@@ -46,6 +46,7 @@ static void create_media_stream()
     stream = gtk_media_file_new_for_filename(current_entry->path);
     gtk_media_stream_set_volume(stream, 1.0);
     gtk_media_stream_play(stream);
+    gtk_media_stream_set_loop(stream, true);
 
     // Update icon
     gtk_button_set_icon_name(GTK_BUTTON(play_button), "media-playback-pause");
@@ -90,6 +91,16 @@ static void on_forwards(GtkButton*)
 
 }
 
+static void on_slider_moved(GtkRange*, GtkScrollType*, gdouble value, gpointer)
+{
+    if (stream == NULL)
+        return;
+
+    gtk_media_stream_seek(stream,
+        (gint64)(value * (double)gtk_media_stream_get_duration(stream))
+    );
+}
+
 void init_playback_ui(GtkBuilder* builder)
 {
     stack = GTK_WIDGET(gtk_builder_get_object(builder, "playback_stack"));
@@ -103,9 +114,10 @@ void init_playback_ui(GtkBuilder* builder)
     playback_slider = GTK_WIDGET(gtk_builder_get_object(builder, "playback_slider"));
     playback_bar = GTK_WIDGET(gtk_builder_get_object(builder, "playback_bar"));
 
-    g_signal_connect(backwards_button,  "clicked", G_CALLBACK(on_backwards),    NULL);
-    g_signal_connect(play_button,       "clicked", G_CALLBACK(on_play),         NULL);
-    g_signal_connect(forwards_button,   "clicked", G_CALLBACK(on_forwards),     NULL);
+    g_signal_connect(backwards_button,  "clicked",      G_CALLBACK(on_backwards),    NULL);
+    g_signal_connect(play_button,       "clicked",      G_CALLBACK(on_play),         NULL);
+    g_signal_connect(forwards_button,   "clicked",      G_CALLBACK(on_forwards),     NULL);
+    g_signal_connect(playback_slider,   "change-value", G_CALLBACK(on_slider_moved), NULL);
 
     playback_on_playlist_changed();
 }
