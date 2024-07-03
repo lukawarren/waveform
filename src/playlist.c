@@ -1,23 +1,41 @@
 #include <adwaita.h>
 
+typedef struct PlaylistEntry
+{
+    const char* name;
+    const char* duration;
+    const char* path;
+} PlaylistEntry;
+static GList* playlist = NULL;
+
 static GtkWidget* playlist_list;
 static GtkWidget* playlist_stack;
 static GtkWidget* playlist_page;
 static GtkWidget* empty_page;
 
+static void handle_stack()
+{
+    gint length = g_list_length(playlist);
+    adw_view_stack_set_visible_child(
+        ADW_VIEW_STACK(playlist_stack),
+        length == 0 ? empty_page : playlist_page
+    );
+}
+
 static void on_playlist_entry_removed(GtkButton* button)
 {
     // Find row in list
-    GtkWidget* entry = GTK_WIDGET(button);
+    GtkWidget* widget = GTK_WIDGET(button);
     for (int i = 0; i < 3; ++i)
-        entry = gtk_widget_get_parent(entry);
+        widget = gtk_widget_get_parent(widget);
 
-    adw_preferences_group_remove(ADW_PREFERENCES_GROUP(playlist_list), entry);
-}
+    // Remove from playlist
+    PlaylistEntry* entry = g_object_get_data(G_OBJECT(widget), "entry");
+    playlist = g_list_remove(playlist, entry);
 
-static void on_playlist_entry_add(GtkButton*)
-{
-    adw_view_stack_set_visible_child(ADW_VIEW_STACK(playlist_stack), playlist_page);
+    // Remove from UI
+    adw_preferences_group_remove(ADW_PREFERENCES_GROUP(playlist_list), widget);
+    handle_stack();
 }
 
 static GtkWidget* create_ui_playlist_entry(const char* title, const char* subtitle)
@@ -38,10 +56,29 @@ static GtkWidget* create_ui_playlist_entry(const char* title, const char* subtit
     return entry;
 }
 
-static void add_ui_playlist_entry(const char* title, const char* subtitle)
+static void add_playlist_entry(const char* name, const char* duration)
 {
-    GtkWidget* entry = create_ui_playlist_entry(title, subtitle);
-    adw_preferences_group_add(ADW_PREFERENCES_GROUP(playlist_list), entry);
+    // Add to playlist
+    PlaylistEntry* entry = malloc(sizeof(PlaylistEntry));
+    entry->name = name;
+    entry->duration = duration;
+    entry->path = NULL;
+    playlist = g_list_append(playlist, entry);
+
+    // Add to UI
+    GtkWidget* widget = create_ui_playlist_entry(name, duration);
+    adw_preferences_group_add(ADW_PREFERENCES_GROUP(playlist_list), widget);
+
+    // Bind list entry to button for event callback
+    g_object_set_data(G_OBJECT(widget), "entry", entry);
+}
+
+static void on_playlist_entry_add(GtkButton*)
+{
+    add_playlist_entry("JAY-Z - 4:44", "4:47");
+    add_playlist_entry("B Young - 079ME", "3:31");
+    add_playlist_entry("21 Savage - asmr", "2:53");
+    handle_stack();
 }
 
 void init_playlist_ui(GtkBuilder* builder)
@@ -55,8 +92,14 @@ void init_playlist_ui(GtkBuilder* builder)
     // Add button
     GtkWidget* playlist_add_button = GTK_WIDGET(gtk_builder_get_object(builder, "playlist_add_button"));
     g_signal_connect(playlist_add_button, "clicked", G_CALLBACK(on_playlist_entry_add), NULL);
+}
 
-    add_ui_playlist_entry("JAY-Z - 4:44", "4:47");
-    add_ui_playlist_entry("B Young - 079ME", "3:31");
-    add_ui_playlist_entry("21 Savage - asmr", "2:53");
+static void free_playlist_entry(void* entry)
+{
+    free(entry);
+}
+
+void destroy_playlist_ui()
+{
+    g_list_free_full(playlist, free_playlist_entry);
 }

@@ -1,7 +1,9 @@
 #include <adwaita.h>
 #include "playlist.h"
 
-static void on_activate(GtkApplication *app)
+static void on_close(GtkApplication* app);
+
+static void on_activate(GtkApplication* app)
 {
     // Create window
     GtkBuilder* builder = gtk_builder_new_from_resource("/com/github/lukawarren/waveform/src/ui/window.ui");
@@ -14,6 +16,14 @@ static void on_activate(GtkApplication *app)
     // Show window
     gtk_widget_set_visible(GTK_WIDGET(window), TRUE);
     g_object_unref(builder);
+
+    // Memory clean-up
+    g_signal_connect(window, "destroy", G_CALLBACK(on_close), NULL);
+}
+
+static void on_close(GtkApplication* app)
+{
+    destroy_playlist_ui();
 }
 
 int main(int argc, char** argv)
