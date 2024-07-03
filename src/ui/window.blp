@@ -32,22 +32,40 @@ Adw.Window window {
                     };
 
                     [bottom]
-                    Gtk.ActionBar {
+                    Gtk.ActionBar playback_bar {
                         [center]
-                        Gtk.Grid {
-                            Gtk.Button backwards_button {
-                                icon-name: "media-skip-backward";
-                                styles ["circular", "raised"]
-                            }
-                            Gtk.Button play_button {
-                                margin-start: 20;
-                                margin-end: 20;
-                                icon-name: "media-playback-start";
-                                styles ["circular", "raised"]
-                            }
-                            Gtk.Button forwards_button {
-                                icon-name: "media-skip-forward";
-                                styles ["circular", "raised"]
+                        Gtk.Box {
+                            Gtk.Grid {
+                                orientation: vertical;
+
+                                Gtk.Scale playback_slider {
+                                    hexpand: true;
+                                    adjustment: Gtk.Adjustment {
+                                        lower: 0.0;
+                                        upper: 1.0;
+                                        value: 0.0;
+                                    };
+                                }
+                                Gtk.Grid {
+                                    orientation: horizontal;
+                                    halign: center;
+                                    margin-top: 6;
+                                    margin-bottom: 6;
+                                    Gtk.Button backwards_button {
+                                        icon-name: "media-skip-backward";
+                                        styles ["circular", "raised"]
+                                    }
+                                    Gtk.Button play_button {
+                                        margin-start: 20;
+                                        margin-end: 20;
+                                        icon-name: "media-playback-start";
+                                        styles ["circular", "raised"]
+                                    }
+                                    Gtk.Button forwards_button {
+                                        icon-name: "media-skip-forward";
+                                        styles ["circular", "raised"]
+                                    }
+                                }
                             }
                         }
                     }

@@ -9,6 +9,8 @@ static GtkWidget* empty_page;
 static GtkWidget* backwards_button;
 static GtkWidget* play_button;
 static GtkWidget* forwards_button;
+static GtkWidget* playback_slider;
+static GtkWidget* playback_bar;
 
 // Actual playback state
 GtkMediaStream* stream = NULL;
@@ -23,6 +25,14 @@ static void update_stack()
     );
 }
 
+static void on_stream_progress_did_change()
+{
+    gtk_range_set_value(
+        GTK_RANGE(playback_slider),
+        (double)gtk_media_stream_get_timestamp(stream) / (double)gtk_media_stream_get_duration(stream)
+    );
+}
+
 static void create_media_stream()
 {
     // Delete existing stream, if any
@@ -32,10 +42,26 @@ static void create_media_stream()
         g_object_unref(stream);
     }
 
-    printf("%s\n", current_entry->path);
-    stream = gtk_media_file_new_for_filename("~/Music/Car Music/Rama - 2 AM.mp3");
+    // Create stream
+    stream = gtk_media_file_new_for_filename(current_entry->path);
     gtk_media_stream_set_volume(stream, 1.0);
     gtk_media_stream_play(stream);
+
+    // Update icon
+    gtk_button_set_icon_name(GTK_BUTTON(play_button), "media-playback-pause");
+
+    // Create callback for when timestamp changes
+    GClosure* closure = g_cclosure_new(on_stream_progress_did_change, NULL, NULL);
+    GtkAdjustment* adjustment = gtk_range_get_adjustment(GTK_RANGE(playback_slider));
+    g_object_bind_property_with_closures(
+        stream,
+        "timestamp",
+        adjustment,
+        "value",
+        0,
+        closure,
+        NULL
+    );
 }
 
 static void on_backwards(GtkButton*)
@@ -45,7 +71,18 @@ static void on_backwards(GtkButton*)
 
 static void on_play(GtkButton*)
 {
+    if (stream == NULL) return;
 
+    if (gtk_media_stream_get_playing(stream))
+    {
+        gtk_media_stream_pause(stream);
+        gtk_button_set_icon_name(GTK_BUTTON(play_button), "media-playback-start");
+    }
+    else
+    {
+        gtk_media_stream_play(stream);
+        gtk_button_set_icon_name(GTK_BUTTON(play_button), "media-playback-pause");
+    }
 }
 
 static void on_forwards(GtkButton*)
@@ -63,15 +100,14 @@ void init_playback_ui(GtkBuilder* builder)
     play_button = GTK_WIDGET(gtk_builder_get_object(builder, "play_button"));
     forwards_button = GTK_WIDGET(gtk_builder_get_object(builder, "forwards_button"));
 
+    playback_slider = GTK_WIDGET(gtk_builder_get_object(builder, "playback_slider"));
+    playback_bar = GTK_WIDGET(gtk_builder_get_object(builder, "playback_bar"));
+
     g_signal_connect(backwards_button,  "clicked", G_CALLBACK(on_backwards),    NULL);
     g_signal_connect(play_button,       "clicked", G_CALLBACK(on_play),         NULL);
     g_signal_connect(forwards_button,   "clicked", G_CALLBACK(on_forwards),     NULL);
 
     playback_on_playlist_changed();
-
-    // Auto-play
-    if (g_list_length(playlist) != 0)
-        create_media_stream();
 }
 
 void playback_on_playlist_changed()
@@ -85,16 +121,22 @@ void playback_on_playlist_changed()
             current_entry = (PlaylistEntry*)playlist->data;
 
         // Enable buttons
-        gtk_widget_set_sensitive(backwards_button, true);
-        gtk_widget_set_sensitive(play_button, true);
-        gtk_widget_set_sensitive(forwards_button, true);
+        gtk_widget_set_sensitive(playback_bar, true);
+
+        // Auto-play
+        create_media_stream();
     }
     else
     {
         // Disable buttons
-        gtk_widget_set_sensitive(backwards_button, false);
-        gtk_widget_set_sensitive(play_button, false);
-        gtk_widget_set_sensitive(forwards_button, false);
+        gtk_widget_set_sensitive(playback_bar, false);
+
+        // Destroy stream
+        if (stream != NULL)
+        {
+            g_object_unref(stream);
+            stream = NULL;
+        }
     }
 }
 
