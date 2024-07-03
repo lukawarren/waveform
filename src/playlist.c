@@ -169,7 +169,6 @@ void init_playlist_ui(GtkBuilder* builder, GtkWindow* _window)
     // Dummy
     add_file_to_playlist(g_file_new_for_path("~/Music/Car Music/Rama - 2 AM.mp3"));
     update_stack();
-    playback_on_playlist_changed();
 }
 
 void destroy_playlist_ui()

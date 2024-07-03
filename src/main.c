@@ -12,8 +12,8 @@ static void on_activate(GtkApplication* app)
     gtk_window_set_application(GTK_WINDOW(window), app);
 
     // Init tab screens
-    init_playback_ui(builder);
     init_playlist_ui(builder, GTK_WINDOW(window));
+    init_playback_ui(builder);
 
     // Show window
     gtk_widget_set_visible(GTK_WIDGET(window), TRUE);
@@ -26,6 +26,7 @@ static void on_activate(GtkApplication* app)
 static void on_close(GtkApplication*)
 {
     destroy_playlist_ui();
+    destroy_playback_ui();
 }
 
 int main(int argc, char** argv)
