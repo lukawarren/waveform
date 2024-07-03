@@ -12,6 +12,7 @@ static GtkWidget* playlist_list;
 static GtkWidget* playlist_stack;
 static GtkWidget* playlist_page;
 static GtkWidget* empty_page;
+static GtkWindow* window;
 
 static void handle_stack()
 {
@@ -20,6 +21,14 @@ static void handle_stack()
         ADW_VIEW_STACK(playlist_stack),
         length == 0 ? empty_page : playlist_page
     );
+}
+
+static void free_playlist_entry(void* entry)
+{
+    g_free((void*)((PlaylistEntry*)entry)->name);
+    g_free((void*)((PlaylistEntry*)entry)->duration);
+    g_free((void*)((PlaylistEntry*)entry)->path);
+    free(entry);
 }
 
 static void on_playlist_entry_removed(GtkButton* button)
@@ -31,6 +40,7 @@ static void on_playlist_entry_removed(GtkButton* button)
 
     // Remove from playlist
     PlaylistEntry* entry = g_object_get_data(G_OBJECT(widget), "entry");
+    free_playlist_entry(entry);
     playlist = g_list_remove(playlist, entry);
 
     // Remove from UI
@@ -56,13 +66,13 @@ static GtkWidget* create_ui_playlist_entry(const char* title, const char* subtit
     return entry;
 }
 
-static void add_playlist_entry(const char* name, const char* duration)
+static void add_playlist_entry(const char* name, const char* duration, const char* path)
 {
     // Add to playlist
     PlaylistEntry* entry = malloc(sizeof(PlaylistEntry));
     entry->name = name;
     entry->duration = duration;
-    entry->path = NULL;
+    entry->path = path;
     playlist = g_list_append(playlist, entry);
 
     // Add to UI
@@ -73,30 +83,49 @@ static void add_playlist_entry(const char* name, const char* duration)
     g_object_set_data(G_OBJECT(widget), "entry", entry);
 }
 
-static void on_playlist_entry_add(GtkButton*)
+void on_playlist_add_dialog_ready(GObject* dialog, GAsyncResult* result, gpointer)
 {
-    add_playlist_entry("JAY-Z - 4:44", "4:47");
-    add_playlist_entry("B Young - 079ME", "3:31");
-    add_playlist_entry("21 Savage - asmr", "2:53");
+    GFile* file = gtk_file_dialog_open_finish(GTK_FILE_DIALOG(dialog), result, NULL);
+    if (file == NULL) return;
+
+    // Allocate strings
+    char* file_name = g_file_get_basename(file);
+    char* file_duration = malloc(sizeof("1:23"));
+    strcpy(file_duration, "1:23");
+    gchar* file_path = g_file_get_path(file);
+
+    // Add to program
+    add_playlist_entry(file_name, file_duration, file_path);
     handle_stack();
+
+    g_object_unref(file);
+    g_object_unref(dialog);
 }
 
-void init_playlist_ui(GtkBuilder* builder)
+static void on_playlist_entry_add(GtkButton*)
+{
+    GtkFileDialog* dialog = gtk_file_dialog_new();
+    gtk_file_dialog_open(
+        dialog,
+        window,
+        NULL,
+        on_playlist_add_dialog_ready,
+        NULL
+    );
+}
+
+void init_playlist_ui(GtkBuilder* builder, GtkWindow* _window)
 {
     // Get objects
     playlist_list = GTK_WIDGET(gtk_builder_get_object(builder, "playlist_list"));
     playlist_stack = GTK_WIDGET(gtk_builder_get_object(builder, "playlist_stack"));
     playlist_page = GTK_WIDGET(gtk_builder_get_object(builder, "playlist_page"));
     empty_page = GTK_WIDGET(gtk_builder_get_object(builder, "empty_page"));
+    window = _window;
 
     // Add button
     GtkWidget* playlist_add_button = GTK_WIDGET(gtk_builder_get_object(builder, "playlist_add_button"));
     g_signal_connect(playlist_add_button, "clicked", G_CALLBACK(on_playlist_entry_add), NULL);
-}
-
-static void free_playlist_entry(void* entry)
-{
-    free(entry);
 }
 
 void destroy_playlist_ui()
