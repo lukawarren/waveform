@@ -2,9 +2,9 @@
 
 typedef struct PlaylistEntry
 {
-    const char* name;
-    const char* duration;
-    const char* path;
+    const gchar* name;
+    const gchar* duration;
+    const gchar* path;
 } PlaylistEntry;
 static GList* playlist = NULL;
 
@@ -48,10 +48,11 @@ static void on_playlist_entry_removed(GtkButton* button)
     handle_stack();
 }
 
-static GtkWidget* create_ui_playlist_entry(const char* title, const char* subtitle)
+static GtkWidget* create_ui_playlist_entry(const gchar* title, const gchar* subtitle)
 {
     // Row
     GtkWidget* entry = adw_action_row_new();
+
     adw_preferences_row_set_title(ADW_PREFERENCES_ROW(entry), title);
     adw_action_row_set_subtitle(ADW_ACTION_ROW(entry), subtitle);
 
@@ -66,7 +67,7 @@ static GtkWidget* create_ui_playlist_entry(const char* title, const char* subtit
     return entry;
 }
 
-static void add_playlist_entry(const char* name, const char* duration, const char* path)
+static void add_playlist_entry(const char* name, const gchar* duration, const gchar* path)
 {
     // Add to playlist
     PlaylistEntry* entry = malloc(sizeof(PlaylistEntry));
@@ -85,27 +86,59 @@ static void add_playlist_entry(const char* name, const char* duration, const cha
 
 void on_playlist_add_dialog_ready(GObject* dialog, GAsyncResult* result, gpointer)
 {
-    GFile* file = gtk_file_dialog_open_finish(GTK_FILE_DIALOG(dialog), result, NULL);
-    if (file == NULL) return;
+    GListModel* list = gtk_file_dialog_open_multiple_finish(GTK_FILE_DIALOG(dialog), result, NULL);
+    if (list == NULL)
+    {
+        g_object_unref(dialog);
+        return;
+    }
 
-    // Allocate strings
-    char* file_name = g_file_get_basename(file);
-    char* file_duration = malloc(sizeof("1:23"));
-    strcpy(file_duration, "1:23");
-    gchar* file_path = g_file_get_path(file);
+    for (guint i = 0; i < g_list_model_get_n_items(list); ++i)
+    {
+        GFile* file = g_list_model_get_item(list, i);
 
-    // Add to program
-    add_playlist_entry(file_name, file_duration, file_path);
+        // Allocate strings
+        char* file_name = g_file_get_basename(file);
+        char* file_duration = malloc(sizeof("1:23"));
+        strcpy(file_duration, "1:23");
+        gchar* file_path = g_file_get_path(file);
+
+        // Sanitise for escape sequences
+        gchar* file_name_s = g_markup_escape_text(file_name, -1);
+        gchar* file_path_s = g_markup_escape_text(file_path, -1);
+        free(file_name);
+        free(file_path);
+
+        // Add to program
+        add_playlist_entry(file_name_s, file_duration, file_path_s);
+    }
+
     handle_stack();
-
-    g_object_unref(file);
+    g_object_unref(list);
     g_object_unref(dialog);
 }
 
 static void on_playlist_entry_add(GtkButton*)
 {
     GtkFileDialog* dialog = gtk_file_dialog_new();
-    gtk_file_dialog_open(
+
+    // Pick music folder
+    const gchar* music_location = g_get_user_special_dir(G_USER_DIRECTORY_MUSIC);
+    GFile* music_folder = g_file_new_for_path(music_location);
+    gtk_file_dialog_set_initial_folder(dialog, music_folder);
+    g_object_unref(music_folder);
+
+    // Set filter to audio files only
+    GListStore* filters = g_list_store_new(GTK_TYPE_FILE_FILTER);
+    GtkFileFilter* filter = gtk_file_filter_new();
+    gtk_file_filter_set_name(filter, "Audio files");
+    gtk_file_filter_add_mime_type(filter, "audio/*");
+    g_list_store_append(filters, filter);
+    gtk_file_dialog_set_filters(dialog, G_LIST_MODEL(filters));
+    g_object_unref(filter);
+    g_object_unref(filters);
+
+    gtk_file_dialog_open_multiple(
         dialog,
         window,
         NULL,
