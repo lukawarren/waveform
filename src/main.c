@@ -1,19 +1,17 @@
 #include <adwaita.h>
-#include <glib/gstdio.h>
-
-static void on_click(GtkButton* button)
-{
-    (void)button;
-    printf("Hello world!\n");
-}
+#include "playlist.h"
 
 static void on_activate(GtkApplication *app)
 {
+    // Create window
     GtkBuilder* builder = gtk_builder_new_from_resource("/com/github/lukawarren/waveform/src/ui/window.ui");
-
     GObject* window = gtk_builder_get_object(builder, "window");
     gtk_window_set_application(GTK_WINDOW(window), app);
 
+    // Init tab screens
+    init_playlist_ui(builder);
+
+    // Show window
     gtk_widget_set_visible(GTK_WIDGET(window), TRUE);
     g_object_unref(builder);
 }

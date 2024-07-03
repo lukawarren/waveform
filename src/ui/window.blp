@@ -21,34 +21,22 @@ Adw.Window window {
                 icon-name: "view-list-symbolic";
 
                 child: Adw.ToolbarView {
-                    content: Gtk.ScrolledWindow {
-                        Gtk.Viewport {
-                            Gtk.Box {
-                                orientation: vertical;
-                                Adw.Clamp {
-                                    margin-start: 6;
-                                    margin-end: 6;
-                                    margin-top: 6;
-                                    margin-bottom: 6;
-                                    Adw.PreferencesGroup {
-                                        title: "Current playlist";
-                                        Adw.ActionRow {
-                                            title: "Playboy Carti - Magnolia (Skeler Remix)";
-                                            subtitle: "3:24";
-                                            Gtk.Button {
-                                                icon-name: "edit-delete-symbolic";
-                                                valign: center;
-                                                styles ["flat"]
-                                            }
-                                        }
-                                        Adw.ActionRow {
-                                            title: "Playboy Carti - Magnolia (Skeler Remix)";
-                                            subtitle: "3:24";
-                                            Gtk.Button {
-                                                icon-name: "edit-delete-symbolic";
-                                                valign: center;
-                                                styles ["flat"]
-                                            }
+                    content: Adw.ViewStack playlist_stack {
+                        Adw.StatusPage empty_page {
+                            title: "Empty Playlist";
+                            description: "Click the plus to add new songs";
+                        }
+                        Gtk.ScrolledWindow playlist_page {
+                            Gtk.Viewport {
+                                Gtk.Box {
+                                    orientation: vertical;
+                                    Adw.Clamp {
+                                        margin-start: 6;
+                                        margin-end: 6;
+                                        margin-top: 6;
+                                        margin-bottom: 6;
+                                        Adw.PreferencesGroup playlist_list {
+                                            title: "Current playlist";
                                         }
                                     }
                                 }
@@ -59,7 +47,7 @@ Adw.Window window {
                     [bottom]
                     Gtk.ActionBar {
                         [end]
-                        Gtk.Button {
+                        Gtk.Button playlist_add_button {
                             icon-name: "list-add-symbolic";
                             styles ["circular", "raised"]
                         }

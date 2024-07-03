@@ -15,8 +15,10 @@ gnome = import('gnome')
 
 # Sources
 src = [
-    'src/main.c'
+    'src/main.c',
+    'src/playlist.c'
 ]
+include_dir = include_directories('include')
 
 # UI / resources
 blueprints = custom_target('blueprints',
@@ -38,5 +40,6 @@ executable(
     src,
     resources,
     dependencies: [gtk4_dep, libadwaita_dep],
+    include_directories: include_dir,
     install: false
 )
