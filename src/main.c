@@ -1,5 +1,6 @@
 #include <adwaita.h>
 #include "playlist.h"
+#include "playback.h"
 
 static void on_close(GtkApplication* app);
 
@@ -11,6 +12,7 @@ static void on_activate(GtkApplication* app)
     gtk_window_set_application(GTK_WINDOW(window), app);
 
     // Init tab screens
+    init_playback_ui(builder);
     init_playlist_ui(builder, GTK_WINDOW(window));
 
     // Show window

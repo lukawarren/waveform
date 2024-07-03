@@ -16,13 +16,52 @@ Adw.Window window {
 
         content: Adw.ViewStack stack {
             Adw.ViewStackPage {
+                name: "playback";
+                title: "Playback";
+                icon-name: "media-playback-start-symbolic";
+
+                child: Adw.ToolbarView {
+                    content: Adw.ViewStack playback_stack {
+                        Adw.StatusPage playback_empty_page {
+                            title: "No current song";
+                            description: "Create a playlist to get started";
+                        }
+                        Adw.StatusPage playback_page {
+                            title: "la la la";
+                        }
+                    };
+
+                    [bottom]
+                    Gtk.ActionBar {
+                        [center]
+                        Gtk.Grid {
+                            Gtk.Button backwards_button {
+                                icon-name: "media-skip-backward";
+                                styles ["circular", "raised"]
+                            }
+                            Gtk.Button play_button {
+                                margin-start: 20;
+                                margin-end: 20;
+                                icon-name: "media-playback-start";
+                                styles ["circular", "raised"]
+                            }
+                            Gtk.Button forwards_button {
+                                icon-name: "media-skip-forward";
+                                styles ["circular", "raised"]
+                            }
+                        }
+                    }
+                };
+            }
+
+            Adw.ViewStackPage {
                 name: "playlist";
                 title: "Playlist";
                 icon-name: "view-list-symbolic";
 
                 child: Adw.ToolbarView {
                     content: Adw.ViewStack playlist_stack {
-                        Adw.StatusPage empty_page {
+                        Adw.StatusPage playlist_empty_page {
                             title: "Empty Playlist";
                             description: "Click the plus to add new songs";
                         }
@@ -52,16 +91,6 @@ Adw.Window window {
                             styles ["circular", "raised"]
                         }
                     }
-                };
-            }
-
-            Adw.ViewStackPage {
-                name: "playback";
-                title: "Playback";
-                icon-name: "media-playback-start-symbolic";
-
-                child: Adw.StatusPage {
-                    title: "I was rebuilt!";
                 };
             }
         };

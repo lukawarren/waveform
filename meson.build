@@ -4,7 +4,7 @@ project(
     version: '0.1.0',
     default_options: [
         'c_std=c11',
-        'warning_level=2'
+        'warning_level=everything'
     ]
 )
 
@@ -16,7 +16,8 @@ gnome = import('gnome')
 # Sources
 src = [
     'src/main.c',
-    'src/playlist.c'
+    'src/playlist.c',
+    'src/playback.c'
 ]
 include_dir = include_directories('include')
 

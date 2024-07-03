@@ -1,12 +1,8 @@
 #include <adwaita.h>
+#include "playlist.h"
+#include "playback.h"
 
-typedef struct PlaylistEntry
-{
-    const gchar* name;
-    const gchar* duration;
-    const gchar* path;
-} PlaylistEntry;
-static GList* playlist = NULL;
+GList* playlist = NULL;
 
 static GtkWidget* playlist_list;
 static GtkWidget* playlist_stack;
@@ -14,7 +10,7 @@ static GtkWidget* playlist_page;
 static GtkWidget* empty_page;
 static GtkWindow* window;
 
-static void handle_stack()
+static void update_stack()
 {
     gint length = g_list_length(playlist);
     adw_view_stack_set_visible_child(
@@ -45,7 +41,10 @@ static void on_playlist_entry_removed(GtkButton* button)
 
     // Remove from UI
     adw_preferences_group_remove(ADW_PREFERENCES_GROUP(playlist_list), widget);
-    handle_stack();
+
+    // Update rest of state
+    update_stack();
+    playback_on_playlist_changed();
 }
 
 static GtkWidget* create_ui_playlist_entry(const gchar* title, const gchar* subtitle)
@@ -56,7 +55,7 @@ static GtkWidget* create_ui_playlist_entry(const gchar* title, const gchar* subt
     adw_preferences_row_set_title(ADW_PREFERENCES_ROW(entry), title);
     adw_action_row_set_subtitle(ADW_ACTION_ROW(entry), subtitle);
 
-    // Button
+    // Remove button
     GtkWidget* button = gtk_button_new();
     gtk_button_set_icon_name(GTK_BUTTON(button), "edit-delete-symbolic");
     gtk_widget_set_valign(button, GTK_ALIGN_CENTER);
@@ -84,7 +83,25 @@ static void add_playlist_entry(const char* name, const gchar* duration, const gc
     g_object_set_data(G_OBJECT(widget), "entry", entry);
 }
 
-void on_playlist_add_dialog_ready(GObject* dialog, GAsyncResult* result, gpointer)
+static void add_file_to_playlist(GFile* file)
+{
+    // Allocate strings
+    char* file_name = g_file_get_basename(file);
+    char* file_duration = malloc(sizeof("1:23"));
+    strcpy(file_duration, "1:23");
+    gchar* file_path = g_file_get_path(file);
+
+    // Sanitise for escape sequences
+    gchar* file_name_s = g_markup_escape_text(file_name, -1);
+    gchar* file_path_s = g_markup_escape_text(file_path, -1);
+    free(file_name);
+    free(file_path);
+
+    // Add to program
+    add_playlist_entry(file_name_s, file_duration, file_path_s);
+}
+
+static void on_playlist_add_dialog_ready(GObject* dialog, GAsyncResult* result, gpointer)
 {
     GListModel* list = gtk_file_dialog_open_multiple_finish(GTK_FILE_DIALOG(dialog), result, NULL);
     if (list == NULL)
@@ -96,26 +113,15 @@ void on_playlist_add_dialog_ready(GObject* dialog, GAsyncResult* result, gpointe
     for (guint i = 0; i < g_list_model_get_n_items(list); ++i)
     {
         GFile* file = g_list_model_get_item(list, i);
-
-        // Allocate strings
-        char* file_name = g_file_get_basename(file);
-        char* file_duration = malloc(sizeof("1:23"));
-        strcpy(file_duration, "1:23");
-        gchar* file_path = g_file_get_path(file);
-
-        // Sanitise for escape sequences
-        gchar* file_name_s = g_markup_escape_text(file_name, -1);
-        gchar* file_path_s = g_markup_escape_text(file_path, -1);
-        free(file_name);
-        free(file_path);
-
-        // Add to program
-        add_playlist_entry(file_name_s, file_duration, file_path_s);
+        add_file_to_playlist(file);
     }
 
-    handle_stack();
     g_object_unref(list);
     g_object_unref(dialog);
+
+    // Update rest of program
+    update_stack();
+    playback_on_playlist_changed();
 }
 
 static void on_playlist_entry_add(GtkButton*)
@@ -153,12 +159,17 @@ void init_playlist_ui(GtkBuilder* builder, GtkWindow* _window)
     playlist_list = GTK_WIDGET(gtk_builder_get_object(builder, "playlist_list"));
     playlist_stack = GTK_WIDGET(gtk_builder_get_object(builder, "playlist_stack"));
     playlist_page = GTK_WIDGET(gtk_builder_get_object(builder, "playlist_page"));
-    empty_page = GTK_WIDGET(gtk_builder_get_object(builder, "empty_page"));
+    empty_page = GTK_WIDGET(gtk_builder_get_object(builder, "playlist_empty_page"));
     window = _window;
 
     // Add button
     GtkWidget* playlist_add_button = GTK_WIDGET(gtk_builder_get_object(builder, "playlist_add_button"));
     g_signal_connect(playlist_add_button, "clicked", G_CALLBACK(on_playlist_entry_add), NULL);
+
+    // Dummy
+    add_file_to_playlist(g_file_new_for_path("~/Music/Car Music/Rama - 2 AM.mp3"));
+    update_stack();
+    playback_on_playlist_changed();
 }
 
 void destroy_playlist_ui()
