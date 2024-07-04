@@ -48,17 +48,28 @@ static void on_playlist_entry_removed(GtkButton* button)
     update_playback();
 }
 
+static void on_playlist_entry_clicked(GtkGestureClick*, gint, gdouble, gdouble, gpointer data)
+{
+    PlaylistEntry* entry = (PlaylistEntry*)data;
+    set_new_playback_entry(entry);
+}
+
 static void on_playlist_entry_playback_toggled(GtkButton*)
 {
     toggle_playback();
 }
 
-static GtkWidget* create_ui_playlist_entry(const gchar* title, const gchar* subtitle)
+static GtkWidget* create_ui_playlist_entry(PlaylistEntry* playlist_entry)
 {
     // Row
     GtkWidget* entry = adw_action_row_new();
-    adw_preferences_row_set_title(ADW_PREFERENCES_ROW(entry), title);
-    adw_action_row_set_subtitle(ADW_ACTION_ROW(entry), subtitle);
+    adw_preferences_row_set_title(ADW_PREFERENCES_ROW(entry), playlist_entry->name);
+    adw_action_row_set_subtitle(ADW_ACTION_ROW(entry), playlist_entry->artist);
+
+    // Make row clickable
+    GtkGesture* gesture = gtk_gesture_click_new();
+    g_signal_connect(gesture, "released", G_CALLBACK(on_playlist_entry_clicked), playlist_entry);
+    gtk_widget_add_controller(entry, GTK_EVENT_CONTROLLER(gesture));
 
     // Pause button
     GtkWidget* pause_button = gtk_button_new();
@@ -93,7 +104,7 @@ static void add_playlist_entry(const char* name, const gchar* artist, const gcha
     playlist = g_list_append(playlist, entry);
 
     // Add to UI
-    GtkWidget* widget = create_ui_playlist_entry(name, artist);
+    GtkWidget* widget = create_ui_playlist_entry(entry);
     adw_preferences_group_add(ADW_PREFERENCES_GROUP(playlist_list), widget);
 
     // Create link between playlist entry and UI for later logic

@@ -132,6 +132,12 @@ void toggle_playback()
     on_play(NULL);
 }
 
+void set_new_playback_entry(PlaylistEntry* entry)
+{
+    current_entry = entry;
+    update_playback();
+}
+
 void destroy_playback_ui()
 {
     destroy_audio_stream();
