@@ -160,8 +160,6 @@ void init_playback_ui(GtkBuilder* builder)
 
 void update_playback()
 {
-    update_stack();
-
     if (g_list_length(playlist) != 0)
     {
         // If current song has been removed, go back to start
@@ -183,6 +181,8 @@ void update_playback()
         if (stream != NULL)
             destroy_media_stream();
     }
+
+    update_stack();
 
     set_current_playlist_entry(
         current_entry,
