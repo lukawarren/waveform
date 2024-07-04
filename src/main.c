@@ -1,11 +1,14 @@
 #include <adwaita.h>
 #include "playlist.h"
 #include "playback.h"
+#include "audio_stream.h"
 
 static void on_close(GtkApplication* app);
 
 static void on_activate(GtkApplication* app)
 {
+    init_audio();
+
     // Create window
     GtkBuilder* builder = gtk_builder_new_from_resource("/com/github/lukawarren/waveform/src/ui/window.ui");
     GObject* window = gtk_builder_get_object(builder, "window");
@@ -25,8 +28,12 @@ static void on_activate(GtkApplication* app)
 
 static void on_close(GtkApplication*)
 {
+    // Destroy UI
     destroy_playlist_ui();
     destroy_playback_ui();
+
+    // Destroy audio
+    Mix_CloseAudio();
 }
 
 int main(int argc, char** argv)

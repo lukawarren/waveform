@@ -1,6 +1,7 @@
 #include <adwaita.h>
 #include "playlist.h"
 #include "playback.h"
+#include "audio_stream.h"
 
 // UI
 static GtkWidget* stack;
@@ -13,11 +14,8 @@ static GtkWidget* playback_slider;
 static GtkWidget* playback_bar;
 
 // Actual playback state
-GtkMediaStream* stream = NULL;
 PlaylistEntry* current_entry = NULL;
-
-static void on_forwards();
-void playback_on_playlist_changed();
+AudioStream* audio_stream = NULL;
 
 static void update_stack()
 {
@@ -26,55 +24,6 @@ static void update_stack()
         ADW_VIEW_STACK(stack),
         length == 0 ? empty_page : playback_page
     );
-}
-
-static void on_stream_progress_did_change()
-{
-    gtk_range_set_value(
-        GTK_RANGE(playback_slider),
-        (double)gtk_media_stream_get_timestamp(stream) / (double)gtk_media_stream_get_duration(stream)
-    );
-}
-
-static void destroy_media_stream()
-{
-    g_object_unref(stream);
-    stream = NULL;
-}
-
-static void on_stream_did_finish(GtkMediaStream*)
-{
-    destroy_media_stream();
-    on_forwards(NULL);
-}
-
-static void create_media_stream()
-{
-    if (stream != NULL)
-        destroy_media_stream();
-
-    // Create stream
-    stream = gtk_media_file_new_for_filename(current_entry->path);
-    gtk_media_stream_set_volume(stream, 1.0);
-    gtk_media_stream_play(stream);
-
-    // Update icon
-    gtk_button_set_icon_name(GTK_BUTTON(play_button), "media-playback-pause");
-
-    // Create callback for when timestamp changes
-    GClosure* closure = g_cclosure_new(on_stream_progress_did_change, NULL, NULL);
-    GtkAdjustment* adjustment = gtk_range_get_adjustment(GTK_RANGE(playback_slider));
-    g_object_bind_property_with_closures(
-        stream,
-        "timestamp",
-        adjustment,
-        "value",
-        0,
-        closure,
-        NULL
-    );
-
-    g_signal_connect(stream, "notify::ended", G_CALLBACK(on_stream_did_finish), NULL);
 }
 
 static void on_forwards(GtkButton*)
@@ -107,34 +56,18 @@ static void on_backwards(GtkButton*)
 
 static void on_play(GtkButton*)
 {
-    if (stream == NULL) return;
+    toggle_audio_stream(audio_stream);
+    set_current_playlist_entry(current_entry, audio_stream->is_playing);
 
-    if (gtk_media_stream_get_playing(stream))
-    {
-        gtk_media_stream_pause(stream);
-        gtk_button_set_icon_name(GTK_BUTTON(play_button), "media-playback-start");
-    }
-    else
-    {
-        gtk_media_stream_play(stream);
+    if (audio_stream->is_playing)
         gtk_button_set_icon_name(GTK_BUTTON(play_button), "media-playback-pause");
-    }
-
-    set_current_playlist_entry(current_entry, gtk_media_stream_get_playing(stream));
+    else
+        gtk_button_set_icon_name(GTK_BUTTON(play_button), "media-playback-start");
 }
 
 static void on_slider_moved(GtkRange*, GtkScrollType*, gdouble value, gpointer)
 {
-    if (stream == NULL)
-        return;
 
-    gtk_media_stream_set_loop(stream, true);
-
-    gtk_media_stream_seek(stream,
-        (gint64)(value * (double)gtk_media_stream_get_duration(stream))
-    );
-
-    gtk_media_stream_set_loop(stream, false);
 }
 
 void init_playback_ui(GtkBuilder* builder)
@@ -158,6 +91,13 @@ void init_playback_ui(GtkBuilder* builder)
     update_playback();
 }
 
+static void destroy_audio_stream()
+{
+    if (audio_stream != NULL)
+        free_audio_stream(audio_stream);
+    audio_stream = NULL;
+}
+
 void update_playback()
 {
     if (g_list_length(playlist) != 0)
@@ -169,25 +109,22 @@ void update_playback()
         // Enable buttons
         gtk_widget_set_sensitive(playback_bar, true);
 
-        // Auto-play
-        create_media_stream();
+        // Create new audio stream if song changed
+        if (audio_stream == NULL || current_entry != audio_stream->playlist_entry)
+        {
+            destroy_audio_stream();
+            audio_stream = create_audio_stream(current_entry);
+            on_play(NULL);
+        }
     }
     else
     {
         // Disable buttons
         gtk_widget_set_sensitive(playback_bar, false);
-
-        // Destroy stream
-        if (stream != NULL)
-            destroy_media_stream();
+        destroy_audio_stream();
     }
 
     update_stack();
-
-    set_current_playlist_entry(
-        current_entry,
-        stream == NULL ? false : gtk_media_stream_get_playing(stream)
-    );
 }
 
 void toggle_playback()
@@ -197,6 +134,5 @@ void toggle_playback()
 
 void destroy_playback_ui()
 {
-    if (stream != NULL)
-        destroy_media_stream();
+    destroy_audio_stream();
 }

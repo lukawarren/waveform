@@ -1,4 +1,5 @@
 #include <adwaita.h>
+#include <SDL2/SDL_mixer.h>
 #include "playlist.h"
 #include "playback.h"
 
@@ -22,7 +23,7 @@ static void update_stack()
 static void free_playlist_entry(void* entry)
 {
     g_free((void*)((PlaylistEntry*)entry)->name);
-    g_free((void*)((PlaylistEntry*)entry)->duration);
+    g_free((void*)((PlaylistEntry*)entry)->artist);
     g_free((void*)((PlaylistEntry*)entry)->path);
     free(entry);
 }
@@ -82,17 +83,17 @@ static GtkWidget* create_ui_playlist_entry(const gchar* title, const gchar* subt
     return entry;
 }
 
-static void add_playlist_entry(const char* name, const gchar* duration, const gchar* path)
+static void add_playlist_entry(const char* name, const gchar* artist, const gchar* path)
 {
     // Add to playlist
     PlaylistEntry* entry = malloc(sizeof(PlaylistEntry));
     entry->name = name;
-    entry->duration = duration;
+    entry->artist = artist;
     entry->path = path;
     playlist = g_list_append(playlist, entry);
 
     // Add to UI
-    GtkWidget* widget = create_ui_playlist_entry(name, duration);
+    GtkWidget* widget = create_ui_playlist_entry(name, artist);
     adw_preferences_group_add(ADW_PREFERENCES_GROUP(playlist_list), widget);
 
     // Create link between playlist entry and UI for later logic
@@ -104,20 +105,40 @@ static void add_playlist_entry(const char* name, const gchar* duration, const gc
 
 static void add_file_to_playlist(GFile* file)
 {
-    // Allocate strings
-    char* file_name = g_file_get_basename(file);
-    char* file_duration = malloc(sizeof("1:23"));
-    strcpy(file_duration, "1:23");
-    gchar* file_path = g_file_get_path(file);
+    // Create SDL music object
+    char* file_path = g_file_get_path(file);
+    Mix_Music* music = Mix_LoadMUS(file_path);
+    if (music == NULL)
+        g_critical("failed to load %s\n", file_path);
+
+    // Extract info
+    const char* music_title = Mix_GetMusicTitle(music);
+    const char* music_artist = Mix_GetMusicArtistTag(music);
+
+    // Allocate title
+    char* name;
+    if (strcmp(music_title, "") != 0)
+    {
+        name = malloc(strlen(music_title));
+        strcpy(name, music_title);
+    }
+    else name = g_file_get_basename(file);
+
+    // Allocate artist
+    if (strcmp(music_artist, "") == 0)
+        music_artist = "Unknown artist";
+    char* artist = malloc(strlen(music_artist));
+    strcpy(artist, music_artist);
 
     // Sanitise for escape sequences
-    gchar* file_name_s = g_markup_escape_text(file_name, -1);
-    gchar* file_path_s = g_markup_escape_text(file_path, -1);
-    free(file_name);
-    free(file_path);
+    gchar* name_s = g_markup_escape_text(name, -1);
+    gchar* artist_s = g_markup_escape_text(artist, -1);
+    free(name);
+    free(artist);
+    Mix_FreeMusic(music);
 
     // Add to program
-    add_playlist_entry(file_name_s, file_duration, file_path_s);
+    add_playlist_entry(name_s, artist_s, file_path);
 }
 
 static void on_playlist_add_dialog_ready(GObject* dialog, GAsyncResult* result, gpointer)
