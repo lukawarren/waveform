@@ -88,7 +88,7 @@ static void on_forwards(GtkButton*)
     else
         current_entry = (PlaylistEntry*)current_list_entry->next->data;
 
-    playback_on_playlist_changed();
+    update_playback();
 }
 
 static void on_backwards(GtkButton*)
@@ -102,7 +102,7 @@ static void on_backwards(GtkButton*)
     else
         current_entry = (PlaylistEntry*)current_list_entry->prev->data;
 
-    playback_on_playlist_changed();
+    update_playback();
 }
 
 static void on_play(GtkButton*)
@@ -119,6 +119,8 @@ static void on_play(GtkButton*)
         gtk_media_stream_play(stream);
         gtk_button_set_icon_name(GTK_BUTTON(play_button), "media-playback-pause");
     }
+
+    set_current_playlist_entry(current_entry, gtk_media_stream_get_playing(stream));
 }
 
 static void on_slider_moved(GtkRange*, GtkScrollType*, gdouble value, gpointer)
@@ -153,10 +155,10 @@ void init_playback_ui(GtkBuilder* builder)
     g_signal_connect(forwards_button,   "clicked",      G_CALLBACK(on_forwards),     NULL);
     g_signal_connect(playback_slider,   "change-value", G_CALLBACK(on_slider_moved), NULL);
 
-    playback_on_playlist_changed();
+    update_playback();
 }
 
-void playback_on_playlist_changed()
+void update_playback()
 {
     update_stack();
 
@@ -181,6 +183,16 @@ void playback_on_playlist_changed()
         if (stream != NULL)
             destroy_media_stream();
     }
+
+    set_current_playlist_entry(
+        current_entry,
+        stream == NULL ? false : gtk_media_stream_get_playing(stream)
+    );
+}
+
+void toggle_playback()
+{
+    on_play(NULL);
 }
 
 void destroy_playback_ui()

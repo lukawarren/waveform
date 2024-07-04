@@ -3,4 +3,5 @@
 
 void init_playback_ui(GtkBuilder* builder);
 void destroy_playback_ui();
-void playback_on_playlist_changed();
+void update_playback();
+void toggle_playback();

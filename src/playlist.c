@@ -44,24 +44,40 @@ static void on_playlist_entry_removed(GtkButton* button)
 
     // Update rest of state
     update_stack();
-    playback_on_playlist_changed();
+    update_playback();
+}
+
+static void on_playlist_entry_playback_toggled(GtkButton*)
+{
+    toggle_playback();
 }
 
 static GtkWidget* create_ui_playlist_entry(const gchar* title, const gchar* subtitle)
 {
     // Row
     GtkWidget* entry = adw_action_row_new();
-
     adw_preferences_row_set_title(ADW_PREFERENCES_ROW(entry), title);
     adw_action_row_set_subtitle(ADW_ACTION_ROW(entry), subtitle);
 
+    // Pause button
+    GtkWidget* pause_button = gtk_button_new();
+    gtk_button_set_icon_name(GTK_BUTTON(pause_button), "media-playback-pause");
+    gtk_widget_set_valign(pause_button, GTK_ALIGN_CENTER);
+    gtk_widget_add_css_class(pause_button, "flat");
+    gtk_widget_set_visible(pause_button, false);
+    g_signal_connect(pause_button, "clicked", G_CALLBACK(on_playlist_entry_playback_toggled), NULL);
+    adw_action_row_add_suffix(ADW_ACTION_ROW(entry), pause_button);
+
     // Remove button
-    GtkWidget* button = gtk_button_new();
-    gtk_button_set_icon_name(GTK_BUTTON(button), "edit-delete-symbolic");
-    gtk_widget_set_valign(button, GTK_ALIGN_CENTER);
-    gtk_widget_add_css_class(button, "flat");
-    g_signal_connect(button, "clicked", G_CALLBACK(on_playlist_entry_removed), NULL);
-    adw_action_row_add_suffix(ADW_ACTION_ROW(entry), button);
+    GtkWidget* remove_button = gtk_button_new();
+    gtk_button_set_icon_name(GTK_BUTTON(remove_button), "edit-delete-symbolic");
+    gtk_widget_set_valign(remove_button, GTK_ALIGN_CENTER);
+    gtk_widget_add_css_class(remove_button, "flat");
+    g_signal_connect(remove_button, "clicked", G_CALLBACK(on_playlist_entry_removed), NULL);
+    adw_action_row_add_suffix(ADW_ACTION_ROW(entry), remove_button);
+
+    // Easy way to find pause button once row found
+    g_object_set_data(G_OBJECT(entry), "pause_button", pause_button);
 
     return entry;
 }
@@ -78,6 +94,9 @@ static void add_playlist_entry(const char* name, const gchar* duration, const gc
     // Add to UI
     GtkWidget* widget = create_ui_playlist_entry(name, duration);
     adw_preferences_group_add(ADW_PREFERENCES_GROUP(playlist_list), widget);
+
+    // Create link between playlist entry and UI for later logic
+    g_object_set_data(G_OBJECT(widget), "playlist_entry", entry);
 
     // Bind list entry to button for event callback
     g_object_set_data(G_OBJECT(widget), "entry", entry);
@@ -121,7 +140,7 @@ static void on_playlist_add_dialog_ready(GObject* dialog, GAsyncResult* result, 
 
     // Update rest of program
     update_stack();
-    playback_on_playlist_changed();
+    update_playback();
 }
 
 static void on_playlist_entry_add(GtkButton*)
@@ -175,4 +194,31 @@ void init_playlist_ui(GtkBuilder* builder, GtkWindow* _window)
 void destroy_playlist_ui()
 {
     g_list_free_full(playlist, free_playlist_entry);
+}
+
+void set_current_playlist_entry(PlaylistEntry* entry, bool is_playing)
+{
+    // Find container for rows
+    GtkWidget* root = gtk_widget_get_first_child(playlist_list);
+    root = gtk_widget_get_first_child(root);
+    root = gtk_widget_get_next_sibling(root);
+    root = gtk_widget_get_first_child(root);
+
+    GtkWidget* row = gtk_widget_get_first_child(root);
+    while (row != NULL)
+    {
+        if (strcmp(gtk_widget_get_name(row), "AdwActionRow") == 0)
+        {
+            // Row found; ammend
+            GtkWidget* pause_button = (GtkWidget*)g_object_get_data(G_OBJECT(row), "pause_button");
+            PlaylistEntry* playlist_entry = (PlaylistEntry*) g_object_get_data(G_OBJECT(row), "playlist_entry");
+            gtk_widget_set_visible(pause_button, playlist_entry == entry);
+            gtk_button_set_icon_name(
+                GTK_BUTTON(pause_button),
+                is_playing ? "media-playback-pause" : "media-playback-start"
+            );
+        }
+
+        row = gtk_widget_get_next_sibling(row);
+    }
 }
