@@ -28,12 +28,12 @@ static void on_activate(GtkApplication* app)
 
 static void on_close(GtkApplication*)
 {
+    // Destroy audio
+    Mix_CloseAudio();
+
     // Destroy UI
     destroy_playlist_ui();
     destroy_playback_ui();
-
-    // Destroy audio
-    Mix_CloseAudio();
 }
 
 int main(int argc, char** argv)

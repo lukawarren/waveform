@@ -12,6 +12,7 @@ typedef struct AudioStream
 
 AudioStream* create_audio_stream(PlaylistEntry* entry);
 void toggle_audio_stream(AudioStream* stream);
+void set_audio_stream_progress(AudioStream* stream, double progress);
 void free_audio_stream(AudioStream* stream);
 
 void init_audio();

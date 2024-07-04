@@ -119,7 +119,7 @@ static void add_file_to_playlist(GFile* file)
     char* name;
     if (strcmp(music_title, "") != 0)
     {
-        name = malloc(strlen(music_title));
+        name = malloc(strlen(music_title) + 1);
         strcpy(name, music_title);
     }
     else name = g_file_get_basename(file);
@@ -127,7 +127,7 @@ static void add_file_to_playlist(GFile* file)
     // Allocate artist
     if (strcmp(music_artist, "") == 0)
         music_artist = "Unknown artist";
-    char* artist = malloc(strlen(music_artist));
+    char* artist = malloc(strlen(music_artist) + 1);
     strcpy(artist, music_artist);
 
     // Sanitise for escape sequences

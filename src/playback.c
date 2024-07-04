@@ -31,7 +31,7 @@ static void on_forwards(GtkButton*)
     GList* current_list_entry = g_list_find(playlist, current_entry);
 
     // Loop back if need be
-    if (current_list_entry == NULL || current_list_entry->next == NULL)
+    if (current_list_entry->next == NULL)
         current_entry = (PlaylistEntry*)playlist->data;
 
     else
@@ -44,9 +44,9 @@ static void on_backwards(GtkButton*)
 {
     GList* current_list_entry = g_list_find(playlist, current_entry);
 
-    // Loop forwards if need be
-    if (current_list_entry == NULL || current_list_entry->prev == NULL)
-        current_entry = (PlaylistEntry*)playlist->data;
+    // Loop back if  need be
+    if (current_list_entry->prev == NULL)
+        current_entry = (PlaylistEntry*)g_list_last(playlist)->data;
 
     else
         current_entry = (PlaylistEntry*)current_list_entry->prev->data;
@@ -67,7 +67,7 @@ static void on_play(GtkButton*)
 
 static void on_slider_moved(GtkRange*, GtkScrollType*, gdouble value, gpointer)
 {
-
+    set_audio_stream_progress(audio_stream, value);
 }
 
 void init_playback_ui(GtkBuilder* builder)
@@ -135,4 +135,20 @@ void toggle_playback()
 void destroy_playback_ui()
 {
     destroy_audio_stream();
+}
+
+void on_audio_stream_advanced()
+{
+    // Since we enqueued the work, the audio stream may have been removed
+    if (audio_stream == NULL)
+        return;
+
+    double progress = Mix_GetMusicPosition(audio_stream->music) /
+        Mix_MusicDuration(audio_stream->music);
+
+    gtk_range_set_value(GTK_RANGE(playback_slider), progress);
+
+    // Go to next song when this one finishes
+    if (progress >= 1.0)
+        on_forwards(NULL);
 }

@@ -1,4 +1,5 @@
 #include "audio_stream.h"
+#include "playback.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <adwaita.h>
@@ -31,12 +32,29 @@ void toggle_audio_stream(AudioStream* stream)
         Mix_PauseMusic();
 }
 
+void set_audio_stream_progress(AudioStream* stream, double progress)
+{
+    Mix_SetMusicPosition(progress * Mix_MusicDuration(stream->music));
+}
+
 void free_audio_stream(AudioStream* stream)
 {
     if (stream->music != NULL)
         Mix_FreeMusic(stream->music);
 
     free(stream);
+}
+
+static gboolean gui_idle_callback(gpointer)
+{
+    on_audio_stream_advanced();
+    return false;
+}
+
+static void on_effect_called(int, void*, int, void*)
+{
+    // Enqueue work to GUI thread
+    g_idle_add(gui_idle_callback, NULL);
 }
 
 void init_audio()
@@ -50,6 +68,13 @@ void init_audio()
         AUDIO_F32SYS,   // format
         2,              // channels
         1024            // chunk size
+    );
+
+    Mix_RegisterEffect(
+        MIX_CHANNEL_POST,
+        on_effect_called,
+        NULL,
+        NULL
     );
 }
 
