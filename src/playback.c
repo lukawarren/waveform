@@ -16,6 +16,9 @@ static GtkWidget* playback_bar;
 GtkMediaStream* stream = NULL;
 PlaylistEntry* current_entry = NULL;
 
+static void on_forwards();
+void playback_on_playlist_changed();
+
 static void update_stack()
 {
     gint length = g_list_length(playlist);
@@ -33,20 +36,27 @@ static void on_stream_progress_did_change()
     );
 }
 
+static void destroy_media_stream()
+{
+    g_object_unref(stream);
+    stream = NULL;
+}
+
+static void on_stream_did_finish(GtkMediaStream*)
+{
+    destroy_media_stream();
+    on_forwards(NULL);
+}
+
 static void create_media_stream()
 {
-    // Delete existing stream, if any
     if (stream != NULL)
-    {
-        gtk_media_stream_pause(stream);
-        g_object_unref(stream);
-    }
+        destroy_media_stream();
 
     // Create stream
     stream = gtk_media_file_new_for_filename(current_entry->path);
     gtk_media_stream_set_volume(stream, 1.0);
     gtk_media_stream_play(stream);
-    gtk_media_stream_set_loop(stream, true);
 
     // Update icon
     gtk_button_set_icon_name(GTK_BUTTON(play_button), "media-playback-pause");
@@ -63,11 +73,36 @@ static void create_media_stream()
         closure,
         NULL
     );
+
+    g_signal_connect(stream, "notify::ended", G_CALLBACK(on_stream_did_finish), NULL);
+}
+
+static void on_forwards(GtkButton*)
+{
+    GList* current_list_entry = g_list_find(playlist, current_entry);
+
+    // Loop back if need be
+    if (current_list_entry == NULL || current_list_entry->next == NULL)
+        current_entry = (PlaylistEntry*)playlist->data;
+
+    else
+        current_entry = (PlaylistEntry*)current_list_entry->next->data;
+
+    playback_on_playlist_changed();
 }
 
 static void on_backwards(GtkButton*)
 {
+    GList* current_list_entry = g_list_find(playlist, current_entry);
 
+    // Loop forwards if need be
+    if (current_list_entry == NULL || current_list_entry->prev == NULL)
+        current_entry = (PlaylistEntry*)playlist->data;
+
+    else
+        current_entry = (PlaylistEntry*)current_list_entry->prev->data;
+
+    playback_on_playlist_changed();
 }
 
 static void on_play(GtkButton*)
@@ -86,19 +121,18 @@ static void on_play(GtkButton*)
     }
 }
 
-static void on_forwards(GtkButton*)
-{
-
-}
-
 static void on_slider_moved(GtkRange*, GtkScrollType*, gdouble value, gpointer)
 {
     if (stream == NULL)
         return;
 
+    gtk_media_stream_set_loop(stream, true);
+
     gtk_media_stream_seek(stream,
         (gint64)(value * (double)gtk_media_stream_get_duration(stream))
     );
+
+    gtk_media_stream_set_loop(stream, false);
 }
 
 void init_playback_ui(GtkBuilder* builder)
@@ -145,15 +179,12 @@ void playback_on_playlist_changed()
 
         // Destroy stream
         if (stream != NULL)
-        {
-            g_object_unref(stream);
-            stream = NULL;
-        }
+            destroy_media_stream();
     }
 }
 
 void destroy_playback_ui()
 {
     if (stream != NULL)
-        g_object_unref(stream);
+        destroy_media_stream();
 }
