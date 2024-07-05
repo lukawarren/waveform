@@ -8,7 +8,7 @@ menu main-menu {
 
 Adw.Window window {
     width-request: 400;
-    height-request: 250;
+    height-request: 230;
     title: "Waveform";
 
     content: Adw.ToolbarView {
@@ -108,6 +108,10 @@ Adw.Window window {
                                         margin-end: 6;
                                         margin-top: 6;
                                         margin-bottom: 6;
+
+                                        valign: center;
+                                        vexpand: true;
+
                                         Gtk.ListBox playlist_list {
                                             selection-mode: none;
                                             styles ["boxed-list"]
