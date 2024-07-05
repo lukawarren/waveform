@@ -14,6 +14,16 @@ static void on_activate(GtkApplication* app)
     GObject* window = gtk_builder_get_object(builder, "window");
     gtk_window_set_application(GTK_WINDOW(window), app);
 
+    // Load CSS
+    GtkCssProvider* css_provider = gtk_css_provider_new();
+    gtk_css_provider_load_from_resource(css_provider, "/com/github/lukawarren/waveform/src/ui/style.css");
+    gtk_style_context_add_provider_for_display(
+        gtk_widget_get_display(GTK_WIDGET(window)),
+        GTK_STYLE_PROVIDER(css_provider),
+        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
+    );
+    g_object_unref(css_provider);
+
     // Init tab screens
     init_playlist_ui(builder, GTK_WINDOW(window));
     init_playback_ui(builder);

@@ -29,8 +29,40 @@ static float get_average_frame_value(int index)
     return sum / (float)frames;
 }
 
+static GdkRGBA mix_colours(const GdkRGBA* one, const GdkRGBA* two, float t)
+{
+    GdkRGBA result;
+    result.red = one->red + t * (two->red - one->red);
+    result.green = one->green + t * (two->green - one->green);
+    result.blue = one->blue + t * (two->blue - one->blue);
+    result.alpha = one->alpha + t * (two->alpha - one->alpha);
+    return result;
+}
+
+static GdkRGBA get_background_colour()
+{
+    GdkRGBA background_colour;
+    background_colour.alpha = 0.0f;
+    background_colour.red = 0.0f;
+    background_colour.green = 0.0f;
+    background_colour.blue = 0.0f;
+    return background_colour;
+}
+
+static GdkRGBA get_base_bar_colour()
+{
+    // Overridden by CSS
+    GdkRGBA base_bar_colour;
+    base_bar_colour.alpha = 1.0f;
+    base_bar_colour.red = 1.0f;
+    base_bar_colour.green = 1.0f;
+    base_bar_colour.blue = 1.0f;
+
+    return base_bar_colour;
+}
+
 void visualiser_draw_function(
-    GtkDrawingArea* area,
+    GtkDrawingArea*,
     cairo_t*        cairo,
     int             width,
     int             height,
@@ -39,6 +71,9 @@ void visualiser_draw_function(
 {
     if (get_occupied_frames() == 0)
         return;
+
+    GdkRGBA background_colour = get_background_colour();
+    GdkRGBA base_bar_colour = get_base_bar_colour();
 
     int step_size = 5;
     float scale = 10.0f;
@@ -56,13 +91,39 @@ void visualiser_draw_function(
         bar_height *= scale;
 
         // Colour
-        GdkRGBA colour;
-        colour.alpha = 1.0f;
-        colour.red = colour.blue = colour.green = 1.0f - sinf(G_PI * f);
+        float mix_amount = 1.0f - sinf(G_PI * f);
+        GdkRGBA colour = mix_colours(&base_bar_colour, &background_colour, mix_amount);
         gdk_cairo_set_source_rgba(cairo, &colour);
         cairo_rectangle(cairo, i, height - bar_height - 1.0f, 1.0f, bar_height);
         cairo_fill(cairo);
     }
+}
+
+static void on_theme_changed(GObject*, GParamSpec*, gpointer data)
+{
+    GtkSettings* settings = gtk_settings_get_default();
+    bool is_dark_mode;
+    g_object_get(G_OBJECT(settings), "gtk-application-prefer-dark-theme", &is_dark_mode, NULL);
+
+    GtkWidget* widget = (GtkWidget*)data;
+
+    const char** classes = malloc(sizeof(char*) * 2);
+
+    if (is_dark_mode)
+        classes[0] = "fully-bright-colour";
+    else
+        classes[0] = "fully-dark-colour";
+
+    classes[1] = NULL;
+    gtk_widget_set_css_classes(widget, classes);
+    free(classes);
+}
+
+void visualiser_init(GtkWidget* widget)
+{
+    GtkSettings* settings = gtk_settings_get_default();
+    g_signal_connect(settings, "notify::gtk-application-prefer-dark-theme", G_CALLBACK(on_theme_changed), widget);
+    on_theme_changed(NULL, NULL, widget);
 }
 
 void visualiser_set_data(AudioPacket* packet)

@@ -90,6 +90,8 @@ void init_playback_ui(GtkBuilder* builder)
     g_signal_connect(forwards_button,   "clicked",      G_CALLBACK(on_forwards),     NULL);
     g_signal_connect(playback_slider,   "change-value", G_CALLBACK(on_slider_moved), NULL);
 
+    visualiser_init(drawing_area);
+
     gtk_drawing_area_set_draw_func(
         GTK_DRAWING_AREA(drawing_area),
         visualiser_draw_function,

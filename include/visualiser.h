@@ -10,5 +10,6 @@ void visualiser_draw_function(
     gpointer        data
 );
 
+void visualiser_init(GtkWidget* widget);
 void visualiser_set_data(AudioPacket* packet);
 void visualiser_free_data();

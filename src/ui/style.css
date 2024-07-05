@@ -1,0 +1,7 @@
+.fully-dark-colour {
+    filter: brightness(0%);
+}
+
+.fully-bright-colour {
+    filter: brightness(100%);
+}
