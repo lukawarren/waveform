@@ -9,6 +9,8 @@ project(
 )
 
 # Dependencies
+cc = meson.get_compiler('c')
+maths_dep = cc.find_library('m', required : false)
 gtk4_dep = dependency('gtk4', version: '>= 4.0')
 libadwaita_dep = dependency('libadwaita-1', version: '>= 1.0')
 sdl2_dep = dependency('sdl2', version: '>= 2.0.0')
@@ -44,7 +46,7 @@ executable(
     'waveform',
     src,
     resources,
-    dependencies: [gtk4_dep, libadwaita_dep, sdl2_dep, sdl2mixer_dep],
+    dependencies: [maths_dep, gtk4_dep, libadwaita_dep, sdl2_dep, sdl2mixer_dep],
     include_directories: include_dir,
     install: false
 )
