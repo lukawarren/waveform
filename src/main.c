@@ -4,6 +4,14 @@
 #include "audio_stream.h"
 
 static void on_close(GtkApplication* app);
+static void on_preferences_action(GSimpleAction*, GVariant*, gpointer);
+static void on_about_action(GSimpleAction*, GVariant*, gpointer);
+
+static const GActionEntry app_actions[] =
+{
+	{ "preferences", on_preferences_action, NULL, NULL, NULL, { 0 } },
+	{ "about", on_about_action, NULL, NULL, NULL, { 0 } }
+};
 
 static void on_activate(GtkApplication* app)
 {
@@ -13,6 +21,19 @@ static void on_activate(GtkApplication* app)
     GtkBuilder* builder = gtk_builder_new_from_resource("/com/github/lukawarren/waveform/src/ui/window.ui");
     GObject* window = gtk_builder_get_object(builder, "window");
     gtk_window_set_application(GTK_WINDOW(window), app);
+
+    // Setup main menu
+    g_action_map_add_action_entries(
+        G_ACTION_MAP(app),
+        app_actions,
+        G_N_ELEMENTS(app_actions),
+        window
+    );
+    gtk_application_set_accels_for_action(
+        app,
+        "app.preferences",
+        (const char*[]) { "<primary>comma", NULL }
+    );
 
     // Load CSS
     GtkCssProvider* css_provider = gtk_css_provider_new();
@@ -44,6 +65,24 @@ static void on_close(GtkApplication*)
     // Destroy UI
     destroy_playlist_ui();
     destroy_playback_ui();
+}
+
+static void on_preferences_action(GSimpleAction*, GVariant*, gpointer)
+{
+    printf("preferences\n");
+}
+
+static void on_about_action(GSimpleAction*, GVariant*, gpointer window)
+{
+    adw_show_about_window(
+        window,
+        "application-name", "Waveform",
+        "developer-name", "Luka Warren",
+        "version", "1.0",
+        "copyright", "© 2024 Luka Warren",
+        "license-type", GTK_LICENSE_GPL_3_0,
+        NULL
+    );
 }
 
 int main(int argc, char** argv)

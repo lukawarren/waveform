@@ -1,6 +1,11 @@
 using Gtk 4.0;
 using Adw 1;
 
+menu main-menu {
+    item("Preferences", "app.preferences")
+    item("About", "app.about")
+}
+
 Adw.Window window {
     width-request: 400;
     height-request: 250;
@@ -13,6 +18,13 @@ Adw.Window window {
                 stack: stack;
                 policy: wide;
             };
+
+            [end]
+            Gtk.MenuButton {
+                icon-name: "open-menu-symbolic";
+                tooltip-text: "Main Menu";
+                menu-model: main-menu;
+            }
         }
 
         content: Adw.ViewStack stack {
