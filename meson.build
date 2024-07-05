@@ -30,7 +30,8 @@ include_dir = include_directories('include')
 # UI / resources
 blueprints = custom_target('blueprints',
     input: files(
-        'src/ui/window.blp'
+        'src/ui/window.blp',
+        'src/ui/preferences.blp'
     ),
     output: '.',
     command: [find_program('blueprint-compiler'), 'batch-compile', '@OUTPUT@', '@CURRENT_SOURCE_DIR@', '@INPUT@'],

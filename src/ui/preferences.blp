@@ -1,0 +1,58 @@
+using Gtk 4.0;
+using Adw 1;
+
+StringList visualisation_type_options {
+    strings [
+        "Frequency Domain",
+        "Time Domain"
+    ]
+}
+
+Adw.PreferencesWindow preferences_window {
+    Adw.PreferencesPage {
+        title: "Visualisation";
+        icon-name: "applications-graphics";
+
+        Adw.PreferencesGroup {
+            title: "General";
+            Adw.ComboRow {
+                title: "Visualisation Type";
+                model: visualisation_type_options;
+            }
+            Adw.SpinRow {
+                title: "Gap Size";
+                adjustment: Gtk.Adjustment {
+                    lower: 1;
+                    upper: 100;
+                    value: 5;
+                    page-increment: 10;
+                    step-increment: 1;
+                };
+            }
+        }
+
+        Adw.PreferencesGroup {
+            title: "Frequency Domain";
+            Adw.SpinRow {
+                title: "Minimum Frequency";
+                adjustment: Gtk.Adjustment {
+                    lower: 1;
+                    upper: 10000;
+                    value: 20;
+                    page-increment: 10;
+                    step-increment: 1;
+                };
+            }
+            Adw.SpinRow {
+                title: "Maximum Frequency";
+                adjustment: Gtk.Adjustment {
+                    lower: 10000;
+                    upper: 30000;
+                    value: 20000;
+                    page-increment: 10;
+                    step-increment: 1;
+                };
+            }
+        }
+    }
+}

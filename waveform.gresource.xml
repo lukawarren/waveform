@@ -2,6 +2,7 @@
 <gresources>
     <gresource prefix="/com/github/lukawarren/waveform">
         <file>src/ui/window.ui</file>
+        <file>src/ui/preferences.ui</file>
         <file>src/ui/style.css</file>
     </gresource>
 </gresources>

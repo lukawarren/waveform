@@ -69,7 +69,10 @@ static void on_close(GtkApplication*)
 
 static void on_preferences_action(GSimpleAction*, GVariant*, gpointer)
 {
-    printf("preferences\n");
+    GtkBuilder* builder = gtk_builder_new_from_resource("/com/github/lukawarren/waveform/src/ui/preferences.ui");
+    GObject* window = gtk_builder_get_object(builder, "preferences_window");
+    gtk_widget_set_visible(GTK_WIDGET(window), TRUE);
+    g_object_unref(builder);
 }
 
 static void on_about_action(GSimpleAction*, GVariant*, gpointer window)
