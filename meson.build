@@ -20,7 +20,8 @@ src = [
     'src/main.c',
     'src/playlist.c',
     'src/playback.c',
-    'src/audio_stream.c'
+    'src/audio_stream.c',
+    'src/visualiser.c'
 ]
 include_dir = include_directories('include')
 

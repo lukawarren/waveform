@@ -1,7 +1,7 @@
 #include <adwaita.h>
 #include "playlist.h"
 #include "playback.h"
-#include "audio_stream.h"
+#include "visualiser.h"
 
 // UI
 static GtkWidget* stack;
@@ -12,6 +12,7 @@ static GtkWidget* play_button;
 static GtkWidget* forwards_button;
 static GtkWidget* playback_slider;
 static GtkWidget* playback_bar;
+static GtkWidget* drawing_area;
 
 // Actual playback state
 PlaylistEntry* current_entry = NULL;
@@ -75,6 +76,7 @@ void init_playback_ui(GtkBuilder* builder)
     stack = GTK_WIDGET(gtk_builder_get_object(builder, "playback_stack"));
     playback_page = GTK_WIDGET(gtk_builder_get_object(builder, "playback_page"));
     empty_page = GTK_WIDGET(gtk_builder_get_object(builder, "playback_empty_page"));
+    drawing_area = GTK_WIDGET(gtk_builder_get_object(builder, "drawing_area"));
 
     backwards_button = GTK_WIDGET(gtk_builder_get_object(builder, "backwards_button"));
     play_button = GTK_WIDGET(gtk_builder_get_object(builder, "play_button"));
@@ -87,6 +89,13 @@ void init_playback_ui(GtkBuilder* builder)
     g_signal_connect(play_button,       "clicked",      G_CALLBACK(on_play),         NULL);
     g_signal_connect(forwards_button,   "clicked",      G_CALLBACK(on_forwards),     NULL);
     g_signal_connect(playback_slider,   "change-value", G_CALLBACK(on_slider_moved), NULL);
+
+    gtk_drawing_area_set_draw_func(
+        GTK_DRAWING_AREA(drawing_area),
+        visualiser_draw_function,
+        NULL,
+        NULL
+    );
 
     update_playback();
 }
@@ -141,18 +150,23 @@ void set_new_playback_entry(PlaylistEntry* entry)
 void destroy_playback_ui()
 {
     destroy_audio_stream();
+    visualiser_free_data();
 }
 
-void on_audio_stream_advanced()
+void on_audio_stream_advanced(AudioPacket* packet)
 {
     // Since we enqueued the work, the audio stream may have been removed
     if (audio_stream == NULL)
         return;
 
+    // Send data to visualiser
+    visualiser_set_data(packet);
+
+    // Update UI
     double progress = Mix_GetMusicPosition(audio_stream->music) /
         Mix_MusicDuration(audio_stream->music);
-
     gtk_range_set_value(GTK_RANGE(playback_slider), progress);
+    gtk_widget_queue_draw(drawing_area);
 
     // Go to next song when this one finishes
     if (progress >= 1.0)

@@ -10,6 +10,12 @@ typedef struct AudioStream
     PlaylistEntry* playlist_entry;
 } AudioStream;
 
+typedef struct AudioPacket
+{
+    float* data;
+    int length;
+} AudioPacket;
+
 AudioStream* create_audio_stream(PlaylistEntry* entry);
 void toggle_audio_stream(AudioStream* stream);
 void set_audio_stream_progress(AudioStream* stream, double progress);

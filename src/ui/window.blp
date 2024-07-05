@@ -26,7 +26,9 @@ Adw.Window window {
                             title: "No current song";
                             description: "Create a playlist to get started";
                         }
-                        Gtk.DrawingArea playback_page {
+                        Adw.Bin playback_page {
+                            Gtk.DrawingArea drawing_area {
+                            }
                         }
                     };
 
