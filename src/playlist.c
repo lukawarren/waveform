@@ -41,7 +41,7 @@ static void on_playlist_entry_removed(GtkButton* button)
     playlist = g_list_remove(playlist, entry);
 
     // Remove from UI
-    adw_preferences_group_remove(ADW_PREFERENCES_GROUP(playlist_list), widget);
+    gtk_list_box_remove(GTK_LIST_BOX(playlist_list), widget);
 
     // Update rest of state
     update_stack();
@@ -105,7 +105,7 @@ static void add_playlist_entry(const char* name, const gchar* artist, const gcha
 
     // Add to UI
     GtkWidget* widget = create_ui_playlist_entry(entry);
-    adw_preferences_group_add(ADW_PREFERENCES_GROUP(playlist_list), widget);
+    gtk_list_box_append(GTK_LIST_BOX(playlist_list), widget);
 
     // Create link between playlist entry and UI for later logic
     g_object_set_data(G_OBJECT(widget), "playlist_entry", entry);
@@ -230,13 +230,7 @@ void destroy_playlist_ui()
 
 void set_current_playlist_entry(PlaylistEntry* entry, bool is_playing)
 {
-    // Find container for rows
-    GtkWidget* root = gtk_widget_get_first_child(playlist_list);
-    root = gtk_widget_get_first_child(root);
-    root = gtk_widget_get_next_sibling(root);
-    root = gtk_widget_get_first_child(root);
-
-    GtkWidget* row = gtk_widget_get_first_child(root);
+    GtkWidget* row = gtk_widget_get_first_child(playlist_list);
     while (row != NULL)
     {
         if (strcmp(gtk_widget_get_name(row), "AdwActionRow") == 0)

@@ -88,6 +88,7 @@ Adw.Window window {
                         }
                         Gtk.ScrolledWindow playlist_page {
                             Gtk.Viewport {
+                                scroll-to-focus: false;
                                 Gtk.Box {
                                     orientation: vertical;
                                     Adw.Clamp {
@@ -95,8 +96,9 @@ Adw.Window window {
                                         margin-end: 6;
                                         margin-top: 6;
                                         margin-bottom: 6;
-                                        Adw.PreferencesGroup playlist_list {
-                                            title: "Current playlist";
+                                        Gtk.ListBox playlist_list {
+                                            selection-mode: none;
+                                            styles ["boxed-list"]
                                         }
                                     }
                                 }
