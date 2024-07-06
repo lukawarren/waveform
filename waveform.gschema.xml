@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+    <schema path="/com/github/lukawarren/waveform/" id="com.github.lukawarren.waveform">
+        <key name="visualisation-type" type="i">
+            <default>0</default>
+            <range min="0" max="1"/>
+            <summary>Visualisation Type</summary>
+            <description>Controls whether audio visualisation occurs in the time domain or frequency domain. 0 = frequency, 1 = time.</description>
+        </key>
+        <key name="gap-size" type="i">
+            <default>5</default>
+            <range min="1" max="1000"/>
+            <summary>Gap Size</summary>
+            <description>The gap between bars when audio is visualised</description>
+        </key>
+        <key name="minimum-frequency" type="i">
+            <default>20</default>
+            <range min="1" max="10000"/>
+            <summary>Minimum Frequency</summary>
+            <description>The minimum frequency of audio that will be visualised</description>
+        </key>
+        <key name="maximum-frequency" type="i">
+            <default>20000</default>
+            <range min="10000" max="30000"/>
+            <summary>Maximum Frequency</summary>
+            <description>The maximum frequency of audio that will be visualised</description>
+        </key>
+    </schema>
+</schemalist>

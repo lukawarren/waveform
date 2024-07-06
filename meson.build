@@ -23,7 +23,8 @@ src = [
     'src/playlist.c',
     'src/playback.c',
     'src/audio_stream.c',
-    'src/visualiser.c'
+    'src/visualiser.c',
+    'src/preferences.c'
 ]
 include_dir = include_directories('include')
 
@@ -41,12 +42,16 @@ resources = gnome.compile_resources(
     'waveform.gresource.xml',
     dependencies: [ blueprints ]
 )
+schemas = gnome.compile_schemas(
+    depend_files: ['waveform.gschema.xml']
+)
 
 # Build the executable
 executable(
     'waveform',
     src,
     resources,
+    schemas,
     dependencies: [maths_dep, gtk4_dep, libadwaita_dep, sdl2_dep, sdl2mixer_dep],
     include_directories: include_dir,
     install: false
