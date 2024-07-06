@@ -18,6 +18,21 @@ static const GActionEntry app_actions[] =
 	{ "about", on_about_action, NULL, NULL, NULL, { 0 } }
 };
 
+// Command line arguments
+static char* playlist_argument;
+static GOptionEntry option_entries[] =
+{
+    {
+        "playlist",
+        'p',
+        0,
+        G_OPTION_ARG_FILENAME,
+        &playlist_argument,
+        "Specify playlist to load at startup",
+        NULL
+    }
+};
+
 static void on_activate(GtkApplication* app)
 {
     init_audio();
@@ -69,6 +84,13 @@ static void on_activate(GtkApplication* app)
     gtk_widget_set_visible(GTK_WIDGET(window), true);
     g_object_unref(builder);
 
+    // Use command line arguments, if any
+    if (playlist_argument != NULL)
+    {
+        load_playlist_with_path(playlist_argument);
+        free(playlist_argument);
+    }
+
     // Memory clean-up
     g_signal_connect(window, "destroy", G_CALLBACK(on_close), NULL);
 }
@@ -115,7 +137,17 @@ static void on_about_action(GSimpleAction*, GVariant*, gpointer window)
 int main(int argc, char** argv)
 {
     // As the program is not properly installed...
-    g_setenv ("GSETTINGS_SCHEMA_DIR", ".", FALSE);
+    g_setenv("GSETTINGS_SCHEMA_DIR", ".", FALSE);
+
+    // Parse command line arugments
+    GError* error = NULL;
+    GOptionContext* context = g_option_context_new(" - lightweight music player and visualiser");
+    g_option_context_add_main_entries(context, option_entries, NULL);
+    if (!g_option_context_parse(context, &argc, &argv, &error))
+    {
+        g_print("failed to parse arguments: %s\n", error->message);
+        exit(1);
+    }
 
     g_autoptr(AdwApplication) app = NULL;
     app = adw_application_new("com.github.lukawarren.waveform", G_APPLICATION_DEFAULT_FLAGS);
