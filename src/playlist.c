@@ -189,7 +189,7 @@ static void set_dialog_directory(GtkFileDialog* dialog)
     g_object_unref(music_folder);
 }
 
-static void on_playlist_entry_add(GtkButton*)
+void on_playlist_entry_add(GtkButton*)
 {
     GtkFileDialog* dialog = gtk_file_dialog_new();
     set_dialog_directory(dialog);

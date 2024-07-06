@@ -7,15 +7,17 @@
 static void on_close(GtkApplication* app);
 static void on_save_playlist(GSimpleAction*, GVariant*, gpointer);
 static void on_load_playlist(GSimpleAction*, GVariant*, gpointer);
+static void on_add_song(GSimpleAction*, GVariant*, gpointer);
 static void on_preferences_action(GSimpleAction*, GVariant*, gpointer);
 static void on_about_action(GSimpleAction*, GVariant*, gpointer);
 
 static const GActionEntry app_actions[] =
 {
-    { "save_playlist", on_save_playlist, NULL, NULL, NULL, { 0 } },
-    { "load_playlist", on_load_playlist, NULL, NULL, NULL, { 0 } },
-	{ "preferences", on_preferences_action, NULL, NULL, NULL, { 0 } },
-	{ "about", on_about_action, NULL, NULL, NULL, { 0 } }
+    { "save_playlist",  on_save_playlist,       NULL, NULL, NULL, { 0 } },
+    { "load_playlist",  on_load_playlist,       NULL, NULL, NULL, { 0 } },
+    { "add_song",       on_add_song,            NULL, NULL, NULL, { 0 } },
+	{ "preferences",    on_preferences_action,  NULL, NULL, NULL, { 0 } },
+	{ "about",          on_about_action,        NULL, NULL, NULL, { 0 } }
 };
 
 // Command line arguments
@@ -58,6 +60,11 @@ static void on_activate(GtkApplication* app)
         app,
         "app.load_playlist",
         (const char*[]) { "<primary>o", NULL }
+    );
+    gtk_application_set_accels_for_action(
+        app,
+        "app.add_song",
+        (const char*[]) { "<primary>a", NULL }
     );
     gtk_application_set_accels_for_action(
         app,
@@ -114,6 +121,11 @@ static void on_save_playlist(GSimpleAction*, GVariant*, gpointer)
 static void on_load_playlist(GSimpleAction*, GVariant*, gpointer)
 {
     on_playlist_load();
+}
+
+static void on_add_song(GSimpleAction*, GVariant*, gpointer)
+{
+    on_playlist_entry_add(NULL);
 }
 
 static void on_preferences_action(GSimpleAction*, GVariant*, gpointer)
