@@ -44,18 +44,22 @@ void toggle_audio_stream(AudioStream* stream)
 
     if (stream->is_playing)
     {
+    #if !(CONTINUE_VISUALISATION_WHEN_PAUSED)
         Mix_RegisterEffect(
             MIX_CHANNEL_POST,
             on_effect_called,
             NULL,
             NULL
         );
+    #endif
         Mix_ResumeMusic();
     }
 
     else
     {
+    #if !(CONTINUE_VISUALISATION_WHEN_PAUSED)
         Mix_UnregisterAllEffects(MIX_CHANNEL_POST);
+    #endif
         Mix_PauseMusic();
     }
 }
@@ -79,16 +83,23 @@ void init_audio()
     if (SDL_Init(SDL_INIT_AUDIO) < 0)
         g_critical("failed to initialise SDL: %s", SDL_GetError());
 
-    int chunk_size = AUDIO_FREQUENCY / TARGET_FPS;
-
     Mix_OpenAudio(
         AUDIO_FREQUENCY, // frequency
         AUDIO_F32SYS,    // format
-        2,               // channels
-        chunk_size       // chunk size
+        CHANNELS,        // channels
+        PACKET_SIZE      // chunk size
     );
 
-    float fps = (float)AUDIO_FREQUENCY / (float)chunk_size;
+#if CONTINUE_VISUALISATION_WHEN_PAUSED
+    Mix_RegisterEffect(
+        MIX_CHANNEL_POST,
+        on_effect_called,
+        NULL,
+        NULL
+    );
+#endif
+
+    float fps = (float)AUDIO_FREQUENCY / (float)PACKET_SIZE;
     printf("running at approx. %.2f FPS\n", fps);
 }
 

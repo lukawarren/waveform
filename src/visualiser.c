@@ -4,35 +4,12 @@
 #include <complex.h>
 #include <fftw3.h>
 
-#define N_FRAMES 20
+#define FRAME_SIZE PACKET_SIZE
+#define N_FRAMES 5
 
-static float* audio_data[N_FRAMES] = {};
-static int audio_length;
-static int previous_frame;
+static float* audio_data;
+static float* processed_frames[N_FRAMES] = {};
 static int current_frame = 0;
-
-static int get_occupied_frames()
-{
-    for (int i = 0; i < N_FRAMES; ++i)
-        if (audio_data[i] == NULL)
-            return i;
-
-    return N_FRAMES;
-}
-
-static float get_average_frame_value(int index)
-{
-    int frames = get_occupied_frames();
-    float sum = 0.0f;
-    for (int i = 0; i < frames; ++i)
-    {
-        // If we average an entire song we would expect the result to be
-        // about zero, so it'll look visually better if we abs everything
-        float value = audio_data[i][index];
-        sum += fabs(value);
-    }
-    return sum / (float)frames;
-}
 
 static GdkRGBA mix_colours(const GdkRGBA* one, const GdkRGBA* two, float t)
 {
@@ -86,12 +63,49 @@ static int frequency_to_fft_index(float frequency)
     if (frequency < 0 || frequency > AUDIO_FREQUENCY / 2)
         g_warning_once("invalid frequency %f", frequency);
 
-    int index = (int)(frequency / (float)AUDIO_FREQUENCY * (float)audio_length);
-    return MIN(index, audio_length - 1);
+    int index = (int)(frequency / (float)AUDIO_FREQUENCY * (float)FRAME_SIZE);
+    return MIN(index, FRAME_SIZE - 1);
+}
+
+static void add_fft_frame()
+{
+    double* buffer = fftw_alloc_real(FRAME_SIZE);
+    fftw_complex* fft_output = fftw_alloc_complex(FRAME_SIZE);
+
+    // Feed input audio
+    for (int i = 0; i < FRAME_SIZE; ++i)
+        buffer[i] = audio_data[i];
+
+    // Perform DFT
+    fftw_plan plan = fftw_plan_dft_r2c_1d(
+        FRAME_SIZE,
+        buffer,
+        fft_output,
+        FFTW_ESTIMATE
+    );
+    fftw_execute_dft_r2c(plan, buffer, fft_output);
+
+    // Add to frame
+    for (int i = 0; i < FRAME_SIZE; ++i)
+        processed_frames[current_frame][i] = (float)cabs(fft_output[i]);
+    current_frame = (current_frame + 1) % N_FRAMES;
+
+    // Free
+    fftw_destroy_plan(plan);
+    fftw_free(buffer);
+    fftw_free(fft_output);
+}
+
+static void add_time_domain_frame()
+{
+    // Add to frame
+    for (int i = 0; i < FRAME_SIZE; ++i)
+        processed_frames[current_frame][i] = audio_data[i];
+    current_frame = (current_frame + 1) % N_FRAMES;
 }
 
 static float get_bar_height_from_fft(
-    fftw_complex* output,
+    float* frame,
     float minimum_frequency,
     float maximum_frequency,
     float progress,
@@ -128,11 +142,62 @@ static float get_bar_height_from_fft(
         return 0.0f;
 
     // Average each "bin"
-    double total = 0;
+    float total = 0;
     for (int i = min_index; i <= max_index; ++i)
-        total += cabs(output[i]);
+        total += frame[i];
 
-    return total / (double)(max_index - min_index + 1);
+    return total / (float)(max_index - min_index + 1);
+}
+
+static float get_bar_height(
+    float progress,
+    float progress_step,
+    float minimum_frequency,
+    float maximum_frequency,
+    float gain,
+    float height,
+    bool use_bark_scale,
+    bool is_frequency_domain
+)
+{
+    if (is_frequency_domain)
+    {
+        float total = 0.0f;
+        for (int i = 0; i < N_FRAMES; ++i)
+        {
+            total += get_bar_height_from_fft(
+                processed_frames[i],
+                minimum_frequency,
+                maximum_frequency,
+                progress,
+                progress_step,
+                use_bark_scale
+            );
+        }
+        total /= (float)N_FRAMES;
+
+        // Scale logarithmically
+        total = log10f(gain + total);
+        total *= (float)height;
+        return total;
+    }
+    else
+    {
+        int index = (int)(progress * (float)FRAME_SIZE);
+        index = MIN(MAX(index, 0), FRAME_SIZE - 1);
+
+        // Average raw audio samples over N frames
+        float total = 0.0f;
+        for (int i = 0; i < N_FRAMES; ++i)
+            total += processed_frames[i][index];
+        total /= (float)N_FRAMES;
+
+        // Map from [-1, 1] to [0, height]
+        float scale = 10.0f;
+        float bar_height = total / 2.0f * (float)height;
+        bar_height *= scale;
+        return bar_height;
+    }
 }
 
 void visualiser_draw_function(
@@ -143,33 +208,13 @@ void visualiser_draw_function(
     gpointer
 )
 {
-    if (get_occupied_frames() == 0)
-        return;
-
-    fftw_complex* fft_output = NULL;
     bool is_frequency_domain =
         preferences_get_visualisation_type() == VISUALISATION_TYPE_FREQUENCY_DOMAIN;
 
     if (is_frequency_domain)
-    {
-        double* buffer = fftw_alloc_real(audio_length);
-        fft_output = fftw_alloc_complex(audio_length);
-
-        // Convert average input audio
-        for (int i = 0; i < audio_length; ++i)
-            buffer[i] = get_average_frame_value(i);
-
-        // Perform DFT
-        fftw_plan plan = fftw_plan_dft_r2c_1d(
-            audio_length,
-            buffer,
-            fft_output,
-            FFTW_ESTIMATE
-        );
-        fftw_execute_dft_r2c(plan, buffer, fft_output);
-        fftw_destroy_plan(plan);
-        fftw_free(buffer);
-    }
+        add_fft_frame();
+    else
+        add_time_domain_frame();
 
     // Drawing settings
     GdkRGBA background_colour = get_background_colour();
@@ -191,41 +236,25 @@ void visualiser_draw_function(
 
     for (int i = 0; i < width; i += step_size)
     {
-        // Position in audio
-        float f = (float)i / (float)width;
-        int progress = (int)(f * (float)audio_length);
-        progress = MIN(MAX(progress, 0), audio_length - 1);
+        // Position in frame
+        float progress = (float)i / (float)width;
 
-        float bar_height;
-        if (is_frequency_domain)
-        {
-            bar_height = get_bar_height_from_fft(
-                fft_output,
-                minimum_frequency,
-                maximum_frequency,
-                f,
-                progress_step,
-                use_bark_scale
-            );
-
-            // Scale logarithmically
-            bar_height = log10f(gain + bar_height);
-            bar_height *= (float)height;
-        }
-        else
-        {
-            // Map from [-1, 1] to [0, height]
-            float scale = 10.0f;
-            bar_height = get_average_frame_value(progress);
-            bar_height = bar_height / 2.0f * (float)height;
-            bar_height *= scale;
-        }
-
+        // Sample frame(s)
+        float bar_height = get_bar_height(
+            progress,
+            progress_step,
+            minimum_frequency,
+            maximum_frequency,
+            gain,
+            height,
+            use_bark_scale,
+            is_frequency_domain
+        );
 
         // Colour
         if (fade_edges)
         {
-            float mix_amount = 1.0f - sinf(G_PI * f);
+            float mix_amount = 1.0f - sinf(G_PI * progress);
             GdkRGBA colour = mix_colours(&base_bar_colour, &background_colour, mix_amount);
             gdk_cairo_set_source_rgba(cairo, &colour);
         }
@@ -235,33 +264,31 @@ void visualiser_draw_function(
         cairo_rectangle(cairo, i, height - bar_height - 1.0f, 1.0f, bar_height);
         cairo_fill(cairo);
     }
-
-    if (fft_output != NULL)
-        fftw_free(fft_output);
 }
 
 static void on_theme_changed(GObject*, GParamSpec*, gpointer data)
 {
-    GtkSettings* settings = gtk_settings_get_default();
     bool is_dark_mode;
+    GtkSettings* settings = gtk_settings_get_default();
     g_object_get(G_OBJECT(settings), "gtk-application-prefer-dark-theme", &is_dark_mode, NULL);
 
+    const char* classes[] = {
+        is_dark_mode ? "fully-bright-colour" : "fully-dark-colour",
+        NULL
+    };
+
     GtkWidget* widget = (GtkWidget*)data;
-
-    const char** classes = malloc(sizeof(char*) * 2);
-
-    if (is_dark_mode)
-        classes[0] = "fully-bright-colour";
-    else
-        classes[0] = "fully-dark-colour";
-
-    classes[1] = NULL;
     gtk_widget_set_css_classes(widget, classes);
-    free(classes);
 }
 
 void visualiser_init(GtkWidget* widget)
 {
+    // Allocate buffers
+    audio_data = calloc(FRAME_SIZE, sizeof(float));
+    for (int i = 0; i < N_FRAMES; ++i)
+        processed_frames[i] = calloc(FRAME_SIZE, sizeof(float));
+
+    // Setup UI
     GtkSettings* settings = gtk_settings_get_default();
     g_signal_connect(settings, "notify::gtk-application-prefer-dark-theme", G_CALLBACK(on_theme_changed), widget);
     on_theme_changed(NULL, NULL, widget);
@@ -269,33 +296,24 @@ void visualiser_init(GtkWidget* widget)
 
 void visualiser_set_data(AudioPacket* packet)
 {
-    // Delete old frame
-    if (audio_data[current_frame] != NULL)
-        free(audio_data[current_frame]);
+    g_assert(packet->length / CHANNELS == PACKET_SIZE);
+    g_assert(PACKET_SIZE == FRAME_SIZE);
+    g_assert(CHANNELS == 2);
 
-    int channels = 2;
-    audio_data[current_frame] = malloc(sizeof(packet->data[0]) * packet->length / channels);
+    // Average over each channel
+    for (int i = 0; i < packet->length / CHANNELS; ++i)
+    {
+        float sum = 0.0f;
+        for (int c = 0; c < CHANNELS; ++c)
+            sum += packet->data[i * CHANNELS + c];
 
-    // Average over both channels
-    for (int i = 0; i < packet->length / channels; i++)
-        audio_data[current_frame][i] = (packet->data[i * 2] + packet->data[i * 2 + 1]) / 2.0f;
-
-    // Each packet should have an identical length
-    // so there is no need to check they all match
-    audio_length = packet->length / channels;
-
-    previous_frame = current_frame;
-    current_frame = (current_frame + 1) % N_FRAMES;
+        audio_data[i] = sum / (float)CHANNELS;
+    }
 }
 
 void visualiser_free_data()
 {
+    free(audio_data);
     for (int i = 0; i < N_FRAMES; ++i)
-    {
-        if (audio_data[i] != NULL)
-        {
-            free(audio_data[i]);
-            audio_data[i] = NULL;
-        }
-    }
+        free(processed_frames[i]);
 }
