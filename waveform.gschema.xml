@@ -8,7 +8,7 @@
             <description>Controls whether audio visualisation occurs in the time domain or frequency domain. 0 = frequency, 1 = time.</description>
         </key>
         <key name="gap-size" type="i">
-            <default>5</default>
+            <default>10</default>
             <range min="1" max="1000"/>
             <summary>Gap Size</summary>
             <description>The gap between bars when audio is visualised</description>
@@ -20,13 +20,13 @@
         </key>
         <key name="minimum-frequency" type="i">
             <default>55</default>
-            <range min="1" max="5000"/>
+            <range min="1" max="2500"/>
             <summary>Minimum Frequency</summary>
             <description>The minimum frequency of audio that will be visualised</description>
         </key>
         <key name="maximum-frequency" type="i">
-            <default>10000</default>
-            <range min="5000" max="24000"/>
+            <default>5000</default>
+            <range min="2500" max="24000"/>
             <summary>Maximum Frequency</summary>
             <description>The maximum frequency of audio that will be visualised</description>
         </key>
@@ -36,8 +36,8 @@
             <description>Results in a non-uniform x-axis that better reflects human hearing</description>
         </key>
         <key name="gain" type="i">
-            <default>80</default>
-            <range min="0" max="1000"/>
+            <default>0</default>
+            <range min="-1000" max="1000"/>
             <summary>Gain</summary>
             <description>Boosts perceived volume for a “less restrictive” result</description>
         </key>
