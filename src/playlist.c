@@ -2,6 +2,7 @@
 #include <SDL2/SDL_mixer.h>
 #include "playlist.h"
 #include "playback.h"
+#include "common.h"
 
 GList* playlist = NULL;
 
@@ -207,14 +208,14 @@ static void on_playlist_entry_add(GtkButton*)
 void init_playlist_ui(GtkBuilder* builder, GtkWindow* _window)
 {
     // Get objects
-    playlist_list = GTK_WIDGET(gtk_builder_get_object(builder, "playlist_list"));
-    playlist_stack = GTK_WIDGET(gtk_builder_get_object(builder, "playlist_stack"));
-    playlist_page = GTK_WIDGET(gtk_builder_get_object(builder, "playlist_page"));
-    empty_page = GTK_WIDGET(gtk_builder_get_object(builder, "playlist_empty_page"));
+    playlist_list   = GET_WIDGET("playlist_list");
+    playlist_stack  = GET_WIDGET("playlist_stack");
+    playlist_page   = GET_WIDGET("playlist_page");
+    empty_page      = GET_WIDGET("playlist_empty_page");
     window = _window;
 
     // Add button
-    GtkWidget* playlist_add_button = GTK_WIDGET(gtk_builder_get_object(builder, "playlist_add_button"));
+    GtkWidget* playlist_add_button = GET_WIDGET("playlist_add_button");
     g_signal_connect(playlist_add_button, "clicked", G_CALLBACK(on_playlist_entry_add), NULL);
 
     // Dummy

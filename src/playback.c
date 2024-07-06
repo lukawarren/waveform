@@ -2,6 +2,7 @@
 #include "playlist.h"
 #include "playback.h"
 #include "visualiser.h"
+#include "common.h"
 
 // UI
 static GtkWidget* stack;
@@ -73,17 +74,15 @@ static void on_slider_moved(GtkRange*, GtkScrollType*, gdouble value, gpointer)
 
 void init_playback_ui(GtkBuilder* builder)
 {
-    stack = GTK_WIDGET(gtk_builder_get_object(builder, "playback_stack"));
-    playback_page = GTK_WIDGET(gtk_builder_get_object(builder, "playback_page"));
-    empty_page = GTK_WIDGET(gtk_builder_get_object(builder, "playback_empty_page"));
-    drawing_area = GTK_WIDGET(gtk_builder_get_object(builder, "drawing_area"));
-
-    backwards_button = GTK_WIDGET(gtk_builder_get_object(builder, "backwards_button"));
-    play_button = GTK_WIDGET(gtk_builder_get_object(builder, "play_button"));
-    forwards_button = GTK_WIDGET(gtk_builder_get_object(builder, "forwards_button"));
-
-    playback_slider = GTK_WIDGET(gtk_builder_get_object(builder, "playback_slider"));
-    playback_bar = GTK_WIDGET(gtk_builder_get_object(builder, "playback_bar"));
+    stack               = GET_WIDGET("playback_stack");
+    playback_page       = GET_WIDGET("playback_page");
+    empty_page          = GET_WIDGET("playback_empty_page");
+    drawing_area        = GET_WIDGET("drawing_area");
+    backwards_button    = GET_WIDGET("backwards_button");
+    play_button         = GET_WIDGET("play_button");
+    forwards_button     = GET_WIDGET("forwards_button");
+    playback_slider     = GET_WIDGET("playback_slider");
+    playback_bar        = GET_WIDGET("playback_bar");
 
     g_signal_connect(backwards_button,  "clicked",      G_CALLBACK(on_backwards),    NULL);
     g_signal_connect(play_button,       "clicked",      G_CALLBACK(on_play),         NULL);

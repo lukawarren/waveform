@@ -15,15 +15,15 @@ Adw.PreferencesWindow preferences_window {
 
         Adw.PreferencesGroup {
             title: "General";
-            Adw.ComboRow {
+            Adw.ComboRow visualisation_type {
                 title: "Visualisation Type";
                 model: visualisation_type_options;
             }
-            Adw.SpinRow {
+            Adw.SpinRow gap_size {
                 title: "Gap Size";
                 adjustment: Gtk.Adjustment {
                     lower: 1;
-                    upper: 100;
+                    upper: 1000;
                     value: 5;
                     page-increment: 10;
                     step-increment: 1;
@@ -33,7 +33,7 @@ Adw.PreferencesWindow preferences_window {
 
         Adw.PreferencesGroup {
             title: "Frequency Domain";
-            Adw.SpinRow {
+            Adw.SpinRow minimum_frequency {
                 title: "Minimum Frequency";
                 adjustment: Gtk.Adjustment {
                     lower: 1;
@@ -43,7 +43,7 @@ Adw.PreferencesWindow preferences_window {
                     step-increment: 1;
                 };
             }
-            Adw.SpinRow {
+            Adw.SpinRow maximum_frequency {
                 title: "Maximum Frequency";
                 adjustment: Gtk.Adjustment {
                     lower: 10000;
