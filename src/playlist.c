@@ -121,7 +121,11 @@ static void add_file_to_playlist(GFile* file)
     char* file_path = g_file_get_path(file);
     Mix_Music* music = Mix_LoadMUS(file_path);
     if (music == NULL)
+    {
         g_critical("failed to load %s", file_path);
+        g_free(file_path);
+        return;
+    }
 
     // Extract info
     const char* music_title = Mix_GetMusicTitle(music);
@@ -166,6 +170,7 @@ static void on_playlist_add_dialog_ready(GObject* dialog, GAsyncResult* result, 
     {
         GFile* file = g_list_model_get_item(list, i);
         add_file_to_playlist(file);
+        g_object_unref(file);
     }
 
     g_object_unref(list);
@@ -176,15 +181,18 @@ static void on_playlist_add_dialog_ready(GObject* dialog, GAsyncResult* result, 
     update_playback();
 }
 
-static void on_playlist_entry_add(GtkButton*)
+static void set_dialog_directory(GtkFileDialog* dialog)
 {
-    GtkFileDialog* dialog = gtk_file_dialog_new();
-
-    // Pick music folder
     const gchar* music_location = g_get_user_special_dir(G_USER_DIRECTORY_MUSIC);
     GFile* music_folder = g_file_new_for_path(music_location);
     gtk_file_dialog_set_initial_folder(dialog, music_folder);
     g_object_unref(music_folder);
+}
+
+static void on_playlist_entry_add(GtkButton*)
+{
+    GtkFileDialog* dialog = gtk_file_dialog_new();
+    set_dialog_directory(dialog);
 
     // Set filter to audio files only
     GListStore* filters = g_list_store_new(GTK_TYPE_FILE_FILTER);
@@ -217,11 +225,6 @@ void init_playlist_ui(GtkBuilder* builder, GtkWindow* _window)
     // Add button
     GtkWidget* playlist_add_button = GET_WIDGET("playlist_add_button");
     g_signal_connect(playlist_add_button, "clicked", G_CALLBACK(on_playlist_entry_add), NULL);
-
-    // Dummy
-    add_file_to_playlist(g_file_new_for_path("/home/luka/Music/Car JNSQ/Tyla - Water.mp3"));
-    add_file_to_playlist(g_file_new_for_path("/home/luka/Music/Car Music/SL - Tropical.mp3"));
-    update_stack();
 }
 
 void destroy_playlist_ui()
@@ -248,4 +251,109 @@ void set_current_playlist_entry(PlaylistEntry* entry, bool is_playing)
 
         row = gtk_widget_get_next_sibling(row);
     }
+}
+
+static void on_save_dialog_done(GObject* self, GAsyncResult* result, gpointer)
+{
+    // Get path
+    GFile* file = gtk_file_dialog_save_finish(GTK_FILE_DIALOG(self), result, NULL);
+    if (file == NULL) return;
+
+    if (g_file_query_exists(file, NULL))
+        g_file_delete(file, NULL, NULL);
+
+    GFileOutputStream* stream = g_file_create(
+        file,
+        G_FILE_CREATE_NONE,
+        NULL,
+        NULL
+    );
+
+    if (stream != NULL)
+    {
+        GList* current = playlist;
+        while (current != NULL)
+        {
+            PlaylistEntry* entry = (PlaylistEntry*)current->data;
+            g_output_stream_printf(
+                G_OUTPUT_STREAM(stream),
+                NULL,
+                NULL,
+                NULL,
+                "%s\n", entry->path
+            );
+            current = current->next;
+        }
+
+        g_output_stream_close(G_OUTPUT_STREAM(stream), NULL, NULL);
+        g_object_unref(stream);
+    }
+    else
+        g_critical("failed to create output stream");
+
+    g_object_unref(file);
+}
+
+static void on_load_dialog_done(GObject* self, GAsyncResult* result, gpointer)
+{
+    GFile* file = gtk_file_dialog_open_finish(GTK_FILE_DIALOG(self), result, NULL);
+    if (file == NULL) return;
+
+    GFileInputStream* stream = g_file_read(file, NULL, NULL);
+    if (stream != NULL)
+    {
+        // Delete old playlist
+        g_list_free_full(playlist, free_playlist_entry);
+        playlist = NULL;
+        gtk_list_box_remove_all(GTK_LIST_BOX(playlist_list));
+
+        // Read each line
+        GDataInputStream* data_stream = g_data_input_stream_new(G_INPUT_STREAM(stream));
+        while (true)
+        {
+            gsize length;
+            char* line = g_data_input_stream_read_line(data_stream, &length, NULL, NULL);
+
+            if (line == NULL || length == 0)
+                break;
+
+            // file will never be NULL
+            GFile* file = g_file_new_for_path(line);
+            add_file_to_playlist(file);
+            g_object_unref(file);
+            g_free(line);
+        }
+
+        // Update UI
+        update_stack();
+        update_playback();
+
+        g_object_unref(data_stream);
+        g_object_unref(stream);
+    }
+
+    g_object_unref(file);
+}
+
+void on_playlist_save()
+{
+    if (g_list_length(playlist) == 0)
+    {
+        GtkAlertDialog* alert = gtk_alert_dialog_new("Unable To Save Playlist");
+        gtk_alert_dialog_set_detail(alert, "Playlist is currently empty");
+        gtk_alert_dialog_show(alert, window);
+        return;
+    }
+
+    GtkFileDialog* dialog = gtk_file_dialog_new();
+    gtk_file_dialog_set_initial_name(dialog, "playlist.waveform");
+    set_dialog_directory(dialog);
+    gtk_file_dialog_save(dialog, window, NULL, on_save_dialog_done, NULL);
+}
+
+void on_playlist_load()
+{
+    GtkFileDialog* dialog = gtk_file_dialog_new();
+    set_dialog_directory(dialog);
+    gtk_file_dialog_open(dialog, window, NULL, on_load_dialog_done, NULL);
 }

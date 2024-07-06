@@ -5,11 +5,15 @@
 #include "audio_stream.h"
 
 static void on_close(GtkApplication* app);
+static void on_save_playlist(GSimpleAction*, GVariant*, gpointer);
+static void on_load_playlist(GSimpleAction*, GVariant*, gpointer);
 static void on_preferences_action(GSimpleAction*, GVariant*, gpointer);
 static void on_about_action(GSimpleAction*, GVariant*, gpointer);
 
 static const GActionEntry app_actions[] =
 {
+    { "save_playlist", on_save_playlist, NULL, NULL, NULL, { 0 } },
+    { "load_playlist", on_load_playlist, NULL, NULL, NULL, { 0 } },
 	{ "preferences", on_preferences_action, NULL, NULL, NULL, { 0 } },
 	{ "about", on_about_action, NULL, NULL, NULL, { 0 } }
 };
@@ -29,6 +33,16 @@ static void on_activate(GtkApplication* app)
         app_actions,
         G_N_ELEMENTS(app_actions),
         window
+    );
+    gtk_application_set_accels_for_action(
+        app,
+        "app.save_playlist",
+        (const char*[]) { "<primary>s", NULL }
+    );
+    gtk_application_set_accels_for_action(
+        app,
+        "app.load_playlist",
+        (const char*[]) { "<primary>o", NULL }
     );
     gtk_application_set_accels_for_action(
         app,
@@ -68,6 +82,16 @@ static void on_close(GtkApplication*)
     destroy_playlist_ui();
     destroy_playback_ui();
     free_preferences();
+}
+
+static void on_save_playlist(GSimpleAction*, GVariant*, gpointer)
+{
+    on_playlist_save();
+}
+
+static void on_load_playlist(GSimpleAction*, GVariant*, gpointer)
+{
+    on_playlist_load();
 }
 
 static void on_preferences_action(GSimpleAction*, GVariant*, gpointer)
