@@ -20,6 +20,7 @@ void create_preferences_window()
 
     GtkWidget* visualisation_type   = GET_WIDGET("visualisation_type");
     GtkWidget* gap_size             = GET_WIDGET("gap_size");
+    GtkWidget* fade_edges           = GET_WIDGET("fade_edges");
     GtkWidget* minimum_frequency    = GET_WIDGET("minimum_frequency");
     GtkWidget* maximum_frequency    = GET_WIDGET("maximum_frequency");
     GtkWidget* use_bark_scale       = GET_WIDGET("use_bark_scale");
@@ -38,6 +39,14 @@ void create_preferences_window()
         "gap-size",
         gap_size,
         "value",
+        G_SETTINGS_BIND_DEFAULT
+    );
+
+    g_settings_bind(
+        settings,
+        "fade-edges",
+        fade_edges,
+        "active",
         G_SETTINGS_BIND_DEFAULT
     );
 
@@ -86,6 +95,11 @@ VisualisationType preferences_get_visualisation_type()
         return VISUALISATION_TYPE_FREQUENCY_DOMAIN;
     else
         return VISUALISATION_TYPE_TIME_DOMAIN;
+}
+
+bool preferences_get_fade_edges()
+{
+    return g_settings_get_boolean(settings, "fade-edges");
 }
 
 int preferences_get_minimum_frequency()

@@ -13,6 +13,11 @@
             <summary>Gap Size</summary>
             <description>The gap between bars when audio is visualised</description>
         </key>
+        <key name="fade-edges" type="b">
+            <default>true</default>
+            <summary>Fade Edges</summary>
+            <description>Fades edges of visualisation</description>
+        </key>
         <key name="minimum-frequency" type="i">
             <default>55</default>
             <range min="1" max="10000"/>
@@ -26,7 +31,7 @@
             <description>The maximum frequency of audio that will be visualised</description>
         </key>
         <key name="use-bark-scale" type="b">
-            <default>true</default>
+            <default>false</default>
             <summary>Use Bark Scale</summary>
             <description>Results in a non-uniform x-axis that better reflects human hearing</description>
         </key>

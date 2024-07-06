@@ -124,7 +124,7 @@ static float get_bar_height_from_fft(
     // If the resolution is such that adjacent bars will be of the
     // same index (e.g. at the lower end of frequencies), only
     // draw a single bar instead of a whole ugly "block"
-    if (min_index == max_index)
+    if (use_bark_scale && min_index == max_index)
         return 0.0f;
 
     // Average each "bin"
@@ -175,6 +175,7 @@ void visualiser_draw_function(
     GdkRGBA background_colour = get_background_colour();
     GdkRGBA base_bar_colour = get_base_bar_colour();
     int step_size = preferences_get_gap_size();
+    bool fade_edges = preferences_get_fade_edges();
 
     // FFT settings
     bool use_bark_scale = preferences_get_use_bark_scale();
@@ -222,10 +223,15 @@ void visualiser_draw_function(
 
 
         // Colour
-        float mix_amount = 1.0f - sinf(G_PI * f);
-        mix_amount = 0.0f;
-        GdkRGBA colour = mix_colours(&base_bar_colour, &background_colour, mix_amount);
-        gdk_cairo_set_source_rgba(cairo, &colour);
+        if (fade_edges)
+        {
+            float mix_amount = 1.0f - sinf(G_PI * f);
+            GdkRGBA colour = mix_colours(&base_bar_colour, &background_colour, mix_amount);
+            gdk_cairo_set_source_rgba(cairo, &colour);
+        }
+        else
+            gdk_cairo_set_source_rgba(cairo, &base_bar_colour);
+
         cairo_rectangle(cairo, i, height - bar_height - 1.0f, 1.0f, bar_height);
         cairo_fill(cairo);
     }
