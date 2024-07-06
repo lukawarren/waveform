@@ -187,6 +187,7 @@ void visualiser_draw_function(
         maximum_frequency = hertz_to_bark_scale(maximum_frequency);
     }
     float progress_step = (float)step_size / (float)width;
+    float gain = preferences_get_gain();
 
     for (int i = 0; i < width; i += step_size)
     {
@@ -208,8 +209,7 @@ void visualiser_draw_function(
             );
 
             // Scale logarithmically
-            float offset = 1.0f;
-            bar_height = log10f(offset + bar_height);
+            bar_height = log10f(gain + bar_height);
             bar_height *= (float)height;
         }
         else

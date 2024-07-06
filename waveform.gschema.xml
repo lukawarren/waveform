@@ -35,5 +35,11 @@
             <summary>Use Bark Scale</summary>
             <description>Results in a non-uniform x-axis that better reflects human hearing</description>
         </key>
+        <key name="gain" type="i">
+            <default>80</default>
+            <range min="0" max="1000"/>
+            <summary>Gain</summary>
+            <description>Boosts perceived volume for a "less restrictive" result</description>
+        </key>
     </schema>
 </schemalist>

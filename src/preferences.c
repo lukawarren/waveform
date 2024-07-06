@@ -25,6 +25,7 @@ void create_preferences_window()
     GtkWidget* minimum_frequency    = GET_WIDGET("minimum_frequency");
     GtkWidget* maximum_frequency    = GET_WIDGET("maximum_frequency");
     GtkWidget* use_bark_scale       = GET_WIDGET("use_bark_scale");
+    GtkWidget* gain                 = GET_WIDGET("gain");
     GtkWidget* reset_button         = GET_WIDGET("reset_button");
 
     g_settings_bind(
@@ -75,6 +76,14 @@ void create_preferences_window()
         G_SETTINGS_BIND_DEFAULT
     );
 
+    g_settings_bind(
+        settings,
+        "gain",
+        gain,
+        "value",
+        G_SETTINGS_BIND_DEFAULT
+    );
+
     g_signal_connect(reset_button, "clicked", G_CALLBACK(on_reset_preferences), NULL);
 
     g_object_unref(builder);
@@ -118,6 +127,11 @@ bool preferences_get_use_bark_scale()
     return g_settings_get_boolean(settings, "use-bark-scale");
 }
 
+float preferences_get_gain()
+{
+    return (float)g_settings_get_int(settings, "gain") / 100.0f;
+}
+
 static void on_reset_confirmed(GObject* self, GAsyncResult* result, gpointer)
 {
     int index = gtk_alert_dialog_choose_finish(
@@ -134,6 +148,7 @@ static void on_reset_confirmed(GObject* self, GAsyncResult* result, gpointer)
         g_settings_reset(settings, "minimum-frequency");
         g_settings_reset(settings, "maximum-frequency");
         g_settings_reset(settings, "use-bark-scale");
+        g_settings_reset(settings, "gain");
     }
 }
 

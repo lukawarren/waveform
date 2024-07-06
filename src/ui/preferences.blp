@@ -64,6 +64,17 @@ Adw.PreferencesWindow preferences_window {
                 subtitle: "Results in a non-uniform x-axis that better reflects human hearing";
                 active: false;
             }
+            Adw.SpinRow gain {
+                title: "Gain";
+                subtitle: "Boosts perceived volume for a \"less restrictive\" result";
+                adjustment: Gtk.Adjustment {
+                    lower: 0;
+                    upper: 1000;
+                    value: 80;
+                    page-increment: 10;
+                    step-increment: 1;
+                };
+            }
         }
 
         Adw.PreferencesGroup {
