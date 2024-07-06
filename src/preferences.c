@@ -129,6 +129,7 @@ static void on_reset_confirmed(GObject* self, GAsyncResult* result, gpointer)
     {
         g_settings_reset(settings, "gap-size");
         g_settings_reset(settings, "visualisation-type");
+        g_settings_reset(settings, "fade-edges");
         g_settings_reset(settings, "minimum-frequency");
         g_settings_reset(settings, "maximum-frequency");
         g_settings_reset(settings, "use-bark-scale");
