@@ -60,5 +60,13 @@ Adw.PreferencesWindow preferences_window {
                 active: true;
             }
         }
+
+        Adw.PreferencesGroup {
+            Gtk.Button reset_button {
+                label: "Reset";
+                styles ["destructive-action"]
+                hexpand: false;
+            }
+        }
     }
 }
