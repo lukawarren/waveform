@@ -39,7 +39,7 @@
             <default>80</default>
             <range min="0" max="1000"/>
             <summary>Gain</summary>
-            <description>Boosts perceived volume for a "less restrictive" result</description>
+            <description>Boosts perceived volume for a “less restrictive” result</description>
         </key>
     </schema>
 </schemalist>
