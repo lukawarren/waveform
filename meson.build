@@ -15,6 +15,7 @@ gtk4_dep = dependency('gtk4', version: '>= 4.0')
 libadwaita_dep = dependency('libadwaita-1', version: '>= 1.0')
 sdl2_dep = dependency('sdl2', version: '>= 2.0.0')
 sdl2mixer_dep = dependency('sdl2_mixer', version: '>= 2.0.0')
+fftw_dep = dependency('fftw3')
 gnome = import('gnome')
 
 # Sources
@@ -52,7 +53,7 @@ executable(
     src,
     resources,
     schemas,
-    dependencies: [maths_dep, gtk4_dep, libadwaita_dep, sdl2_dep, sdl2mixer_dep],
+    dependencies: [maths_dep, gtk4_dep, libadwaita_dep, sdl2_dep, sdl2mixer_dep, fftw_dep],
     include_directories: include_dir,
     install: false
 )

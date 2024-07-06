@@ -1,5 +1,6 @@
 #include "audio_stream.h"
 #include "playback.h"
+#include "common.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <adwaita.h>
@@ -13,7 +14,7 @@ AudioStream* create_audio_stream(PlaylistEntry* entry)
     stream->music = Mix_LoadMUS(entry->path);
 
     if (stream->music == NULL)
-        g_critical("failed to load %s\n", entry->path);
+        g_critical("failed to load %s", entry->path);
 
     else
         Mix_PlayMusic(stream->music, 0);
@@ -76,20 +77,18 @@ void init_audio()
 {
     // Init SDL
     if (SDL_Init(SDL_INIT_AUDIO) < 0)
-        g_critical("failed to initialise SDL: %s\n", SDL_GetError());
+        g_critical("failed to initialise SDL: %s", SDL_GetError());
 
-    int target_fps = 60;
-    int frequency = 48000;
-    int chunk_size = frequency / target_fps;
+    int chunk_size = AUDIO_FREQUENCY / TARGET_FPS;
 
     Mix_OpenAudio(
-        frequency,      // frequency
-        AUDIO_F32SYS,   // format
-        2,              // channels
-        chunk_size      // chunk size
+        AUDIO_FREQUENCY, // frequency
+        AUDIO_F32SYS,    // format
+        2,               // channels
+        chunk_size       // chunk size
     );
 
-    float fps = (float)frequency / (float)chunk_size;
+    float fps = (float)AUDIO_FREQUENCY / (float)chunk_size;
     printf("running at approx. %.2f FPS\n", fps);
 }
 

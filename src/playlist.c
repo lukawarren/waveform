@@ -121,7 +121,7 @@ static void add_file_to_playlist(GFile* file)
     char* file_path = g_file_get_path(file);
     Mix_Music* music = Mix_LoadMUS(file_path);
     if (music == NULL)
-        g_critical("failed to load %s\n", file_path);
+        g_critical("failed to load %s", file_path);
 
     // Extract info
     const char* music_title = Mix_GetMusicTitle(music);
