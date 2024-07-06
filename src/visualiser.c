@@ -73,7 +73,7 @@ static float hertz_to_bark_scale(float f)
         3.5f * atanf((f / 7500.0f) * (f / 7500.0f));
 }
 
-static float bark_to_herz_scale(float f)
+static float bark_to_hertz_scale(float f)
 {
     // https://www.mathworks.com/help/audio/ref/bark2hz.html
     if (f < 2.0f) f = (f - 0.3f) / 0.85f;
@@ -115,8 +115,8 @@ static float get_bar_height_from_fft(
     else
     {
         // Picked range was in Bark scale; go back to Hertz
-        float min_index_hertz = bark_to_herz_scale(min_frequency);
-        float max_index_hertz = bark_to_herz_scale(max_frequency);
+        float min_index_hertz = bark_to_hertz_scale(min_frequency);
+        float max_index_hertz = bark_to_hertz_scale(max_frequency);
         min_index = frequency_to_fft_index(min_index_hertz);
         max_index = frequency_to_fft_index(max_index_hertz);
     }
