@@ -20,13 +20,13 @@
         </key>
         <key name="minimum-frequency" type="i">
             <default>55</default>
-            <range min="1" max="10000"/>
+            <range min="1" max="5000"/>
             <summary>Minimum Frequency</summary>
             <description>The minimum frequency of audio that will be visualised</description>
         </key>
         <key name="maximum-frequency" type="i">
-            <default>20000</default>
-            <range min="10000" max="24000"/>
+            <default>10000</default>
+            <range min="5000" max="24000"/>
             <summary>Maximum Frequency</summary>
             <description>The maximum frequency of audio that will be visualised</description>
         </key>

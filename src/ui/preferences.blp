@@ -43,7 +43,7 @@ Adw.PreferencesWindow preferences_window {
                 title: "Minimum Frequency";
                 adjustment: Gtk.Adjustment {
                     lower: 1;
-                    upper: 10000;
+                    upper: 5000;
                     value: 55;
                     page-increment: 10;
                     step-increment: 1;
@@ -52,9 +52,9 @@ Adw.PreferencesWindow preferences_window {
             Adw.SpinRow maximum_frequency {
                 title: "Maximum Frequency";
                 adjustment: Gtk.Adjustment {
-                    lower: 10000;
+                    lower: 5000;
                     upper: 24000;
-                    value: 20000;
+                    value: 10000;
                     page-increment: 10;
                     step-increment: 1;
                 };
