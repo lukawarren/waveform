@@ -16,7 +16,8 @@ void create_preferences_window()
 {
     GtkBuilder* builder = gtk_builder_new_from_resource("/com/github/lukawarren/waveform/src/ui/preferences.ui");
     window = gtk_builder_get_object(builder, "preferences_window");
-    gtk_widget_set_visible(GTK_WIDGET(window), TRUE);
+    gtk_window_set_modal(GTK_WINDOW(window), false);
+    gtk_widget_set_visible(GTK_WIDGET(window), true);
 
     GtkWidget* visualisation_type   = GET_WIDGET("visualisation_type");
     GtkWidget* gap_size             = GET_WIDGET("gap_size");

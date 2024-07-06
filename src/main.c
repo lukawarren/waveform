@@ -52,7 +52,7 @@ static void on_activate(GtkApplication* app)
     init_playback_ui(builder);
 
     // Show window
-    gtk_widget_set_visible(GTK_WIDGET(window), TRUE);
+    gtk_widget_set_visible(GTK_WIDGET(window), true);
     g_object_unref(builder);
 
     // Memory clean-up
