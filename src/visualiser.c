@@ -1,4 +1,5 @@
 #include "visualiser.h"
+#include "preferences.h"
 
 #define N_FRAMES 10
 
@@ -72,10 +73,13 @@ void visualiser_draw_function(
     if (get_occupied_frames() == 0)
         return;
 
+    if (preferences_get_visualisation_type() != VISUALISATION_TYPE_TIME_DOMAIN)
+        return;
+
     GdkRGBA background_colour = get_background_colour();
     GdkRGBA base_bar_colour = get_base_bar_colour();
 
-    int step_size = 5;
+    int step_size = preferences_get_gap_size();
     float scale = 10.0f;
 
     for (int i = 0; i < width; i += step_size)

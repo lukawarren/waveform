@@ -59,3 +59,26 @@ void free_preferences()
 {
     g_object_unref(settings);
 }
+
+int preferences_get_gap_size()
+{
+    return g_settings_get_int(settings, "gap-size");
+}
+
+VisualisationType preferences_get_visualisation_type()
+{
+    if (g_settings_get_int(settings, "visualisation-type") == 0)
+        return VISUALISATION_TYPE_FREQUENCY_DOMAIN;
+    else
+        return VISUALISATION_TYPE_TIME_DOMAIN;
+}
+
+int preferences_get_minimum_frequency()
+{
+    return g_settings_get_int(settings, "minimum-frequency");
+}
+
+int preferences_get_maximum_frequency()
+{
+    return g_settings_get_int(settings, "maximum-frequency");
+}
