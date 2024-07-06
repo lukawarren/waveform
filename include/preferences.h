@@ -1,4 +1,5 @@
 #pragma once
+#include <stdbool.h>
 
 typedef enum VisualisationType
 {
@@ -14,3 +15,4 @@ int                 preferences_get_gap_size();
 VisualisationType   preferences_get_visualisation_type();
 int                 preferences_get_minimum_frequency();
 int                 preferences_get_maximum_frequency();
+bool                preferences_get_use_bark_scale();

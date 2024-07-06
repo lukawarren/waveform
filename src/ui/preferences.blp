@@ -21,6 +21,7 @@ Adw.PreferencesWindow preferences_window {
             }
             Adw.SpinRow gap_size {
                 title: "Gap Size";
+                subtitle: "The gap between bars when audio is visualised";
                 adjustment: Gtk.Adjustment {
                     lower: 1;
                     upper: 1000;
@@ -52,6 +53,11 @@ Adw.PreferencesWindow preferences_window {
                     page-increment: 10;
                     step-increment: 1;
                 };
+            }
+            Adw.SwitchRow use_bark_scale {
+                title: "Use Bark Scale";
+                subtitle: "Results in a non-uniform x-axis that better reflects human hearing";
+                active: true;
             }
         }
     }

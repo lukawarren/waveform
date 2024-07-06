@@ -95,17 +95,31 @@ static float get_bar_height_from_fft(
     float minimum_frequency,
     float maximum_frequency,
     float progress,
-    float progress_step
+    float progress_step,
+    bool use_bark_scale
 )
 {
-    // Pick range in Bark scale, then go back to Hertz
+    int min_index, max_index;
+
+    // Incoming frequencies are in whatever scale we want to use
     float frequency_range = maximum_frequency - minimum_frequency;
-    float min_index_bark = minimum_frequency + frequency_range * progress;
-    float max_index_bark = minimum_frequency + frequency_range * (progress + progress_step);
-    float min_index_hertz = bark_to_herz_scale(min_index_bark);
-    float max_index_hertz = bark_to_herz_scale(max_index_bark);
-    int min_index = frequency_to_fft_index(min_index_hertz);
-    int max_index = frequency_to_fft_index(max_index_hertz);
+    float min_frequency = minimum_frequency + frequency_range * progress;
+    float max_frequency = minimum_frequency + frequency_range * (progress + progress_step);
+
+    if (!use_bark_scale)
+    {
+        // Pick range in Hertz scale directly
+        min_index = frequency_to_fft_index(min_frequency);
+        max_index = frequency_to_fft_index(max_frequency);
+    }
+    else
+    {
+        // Picked range was in Bark scale; go back to Hertz
+        float min_index_hertz = bark_to_herz_scale(min_frequency);
+        float max_index_hertz = bark_to_herz_scale(max_frequency);
+        min_index = frequency_to_fft_index(min_index_hertz);
+        max_index = frequency_to_fft_index(max_index_hertz);
+    }
 
     // If the resolution is such that adjacent bars will be of the
     // same index (e.g. at the lower end of frequencies), only
@@ -113,6 +127,7 @@ static float get_bar_height_from_fft(
     if (min_index == max_index)
         return 0.0f;
 
+    // Average each "bin"
     double total = 0;
     for (int i = min_index; i <= max_index; ++i)
         total += cabs(output[i]);
@@ -162,12 +177,14 @@ void visualiser_draw_function(
     int step_size = preferences_get_gap_size();
 
     // FFT settings
-    float minimum_frequency = hertz_to_bark_scale(
-        preferences_get_minimum_frequency()
-    );
-    float maximum_frequency = hertz_to_bark_scale(
-        preferences_get_maximum_frequency()
-    );
+    bool use_bark_scale = preferences_get_use_bark_scale();
+    float minimum_frequency = preferences_get_minimum_frequency();
+    float maximum_frequency = preferences_get_maximum_frequency();
+    if (use_bark_scale)
+    {
+        minimum_frequency = hertz_to_bark_scale(minimum_frequency);
+        maximum_frequency = hertz_to_bark_scale(maximum_frequency);
+    }
     float progress_step = (float)step_size / (float)width;
 
     for (int i = 0; i < width; i += step_size)
@@ -185,7 +202,8 @@ void visualiser_draw_function(
                 minimum_frequency,
                 maximum_frequency,
                 f,
-                progress_step
+                progress_step,
+                use_bark_scale
             );
 
             // Scale logarithmically

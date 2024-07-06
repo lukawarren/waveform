@@ -19,6 +19,7 @@ void create_preferences_window()
     GtkWidget* gap_size             = GET_WIDGET("gap_size");
     GtkWidget* minimum_frequency    = GET_WIDGET("minimum_frequency");
     GtkWidget* maximum_frequency    = GET_WIDGET("maximum_frequency");
+    GtkWidget* use_bark_scale       = GET_WIDGET("use_bark_scale");
 
     g_settings_bind(
         settings,
@@ -52,6 +53,14 @@ void create_preferences_window()
         G_SETTINGS_BIND_DEFAULT
     );
 
+    g_settings_bind(
+        settings,
+        "use-bark-scale",
+        use_bark_scale,
+        "active",
+        G_SETTINGS_BIND_DEFAULT
+    );
+
     g_object_unref(builder);
 }
 
@@ -81,4 +90,9 @@ int preferences_get_minimum_frequency()
 int preferences_get_maximum_frequency()
 {
     return g_settings_get_int(settings, "maximum-frequency");
+}
+
+bool preferences_get_use_bark_scale()
+{
+    return g_settings_get_boolean(settings, "use-bark-scale");
 }

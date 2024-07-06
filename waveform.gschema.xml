@@ -25,5 +25,10 @@
             <summary>Maximum Frequency</summary>
             <description>The maximum frequency of audio that will be visualised</description>
         </key>
+        <key name="use-bark-scale" type="b">
+            <default>true</default>
+            <summary>Use Bark Scale</summary>
+            <description>Results in a non-uniform x-axis that better reflects human hearing</description>
+        </key>
     </schema>
 </schemalist>
