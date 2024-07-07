@@ -116,9 +116,15 @@ static void on_slider_moved(GtkRange*, GtkScrollType*, gdouble value, gpointer)
 static void on_mute(GtkToggleButton*)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mute_button)))
+    {
+        gtk_button_set_icon_name(GTK_BUTTON(mute_button), "audio-volume-muted");
         mute_audio();
+    }
     else
+    {
+        gtk_button_set_icon_name(GTK_BUTTON(mute_button), "audio-volume-high");
         unmute_audio();
+    }
 }
 
 static void on_shuffle(GtkToggleButton*)
