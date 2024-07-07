@@ -295,6 +295,46 @@ void on_playlist_entry_add(GtkButton*)
     );
 }
 
+static void on_playlist_clear_confirmed(GObject* self, GAsyncResult* result, gpointer)
+{
+    int index = gtk_alert_dialog_choose_finish(
+        GTK_ALERT_DIALOG(self),
+        result,
+        NULL
+    );
+
+    if (index == 1)
+    {
+        g_list_free_full(playlist, free_playlist_entry);
+        playlist = NULL;
+        gtk_list_box_remove_all(GTK_LIST_BOX(playlist_list));
+        update_stack();
+        update_playback();
+    }
+}
+
+static void on_playlist_clear(GtkButton*)
+{
+    GtkAlertDialog* dialog = gtk_alert_dialog_new("Are you sure you want to clear the current playlist?");
+
+    const char* const buttons[] = {
+        "No",
+        "Yes",
+        NULL
+    };
+    gtk_alert_dialog_set_buttons(dialog, buttons);
+    gtk_alert_dialog_set_default_button(dialog, 0);
+
+    gtk_alert_dialog_choose(
+        dialog,
+        GTK_WINDOW(window),
+        NULL,
+        on_playlist_clear_confirmed,
+        NULL
+    );
+    g_object_unref(dialog);
+}
+
 void init_playlist_ui(GtkBuilder* builder, GtkWindow* _window)
 {
     // Get objects
@@ -307,6 +347,10 @@ void init_playlist_ui(GtkBuilder* builder, GtkWindow* _window)
     // Add button
     GtkWidget* playlist_add_button = GET_WIDGET("playlist_add_button");
     g_signal_connect(playlist_add_button, "clicked", G_CALLBACK(on_playlist_entry_add), NULL);
+
+    // Clear button
+    GtkWidget* playlist_clear_button = GET_WIDGET("playlist_clear_button");
+    g_signal_connect(playlist_clear_button, "clicked", G_CALLBACK(on_playlist_clear), NULL);
 }
 
 void destroy_playlist_ui()

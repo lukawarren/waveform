@@ -140,6 +140,12 @@ Adw.Window window {
 
                     [bottom]
                     Gtk.ActionBar {
+                        [start]
+                        Gtk.Button playlist_clear_button {
+                            icon-name: "user-trash-symbolic";
+                            styles ["circular", "raised"]
+                        }
+
                         [end]
                         Gtk.Button playlist_add_button {
                             icon-name: "list-add-symbolic";
