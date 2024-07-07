@@ -164,6 +164,12 @@ static GtkWidget* create_ui_playlist_entry(PlaylistEntry* playlist_entry)
     gtk_widget_add_controller(entry, GTK_EVENT_CONTROLLER(target));
     g_signal_connect(target, "drop", G_CALLBACK(on_drop_target_drop), entry);
 
+    // Drag and drop handle
+    GtkWidget* handle = gtk_image_new();
+    gtk_image_set_from_icon_name(GTK_IMAGE(handle), "list-drag-handle-symbolic");
+    gtk_widget_add_css_class(handle, "drag-handle");
+    adw_action_row_add_prefix(ADW_ACTION_ROW(entry), handle);
+
     return entry;
 }
 
