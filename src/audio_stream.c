@@ -10,6 +10,12 @@ static bool muted = false;
 
 AudioStream* create_audio_stream(PlaylistEntry* entry)
 {
+#if !(CONTINUE_VISUALISATION_WHEN_PAUSED)
+    // The current effect may still be present
+    Mix_UnregisterAllEffects(MIX_CHANNEL_POST);
+#endif
+
+    // Create stream and load music
     AudioStream* stream = malloc(sizeof(AudioStream));
     stream->is_playing = false;
     stream->playlist_entry = entry;
@@ -41,7 +47,7 @@ static void on_effect_called(int, void* buffer, int length, void*)
     packet->length = length / sizeof(packet->data[0]);
     g_idle_add_once(gui_idle_callback, packet);
 
-    // Simulated being muted
+    // Simulate being muted
     if (muted)
         memset(buffer, 0, length);
 }
