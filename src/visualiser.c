@@ -98,9 +98,9 @@ static void add_fft_frame()
 
 static void add_time_domain_frame()
 {
-    // Add to frame
+    // Add to frame, but take absolute value as audio is signed
     for (int i = 0; i < FRAME_SIZE; ++i)
-        processed_frames[current_frame][i] = audio_data[i];
+        processed_frames[current_frame][i] = fabs(audio_data[i]);
     current_frame = (current_frame + 1) % N_FRAMES;
 }
 
