@@ -18,8 +18,9 @@ static GtkWidget* mute_button;
 static GtkWidget* shuffle_button;
 
 // Actual playback state
-PlaylistEntry* current_entry = NULL;
-AudioStream* audio_stream = NULL;
+static PlaylistEntry* current_entry = NULL;
+static AudioStream* audio_stream = NULL;
+static bool shuffle = false;
 
 static void update_stack()
 {
@@ -30,30 +31,68 @@ static void update_stack()
     );
 }
 
-static void on_forwards(GtkButton*)
+static void select_random_song()
 {
     GList* current_list_entry = g_list_find(playlist, current_entry);
+    guint length = g_list_length(playlist);
 
-    // Loop back if need be
-    if (current_list_entry->next == NULL)
-        current_entry = (PlaylistEntry*)playlist->data;
+    while (true)
+    {
+        GList* entry = g_list_nth(playlist, rand() % length);
+        if (entry != current_list_entry)
+        {
+            current_entry = (PlaylistEntry*)entry->data;
+            break;
+        }
+    }
+}
 
+static void on_forwards(GtkButton*)
+{
+    if (g_list_length(playlist) == 1)
+    {
+        set_audio_stream_progress(audio_stream, 0.0f);
+        return;
+    }
+
+    if (!shuffle)
+    {
+        GList* current_list_entry = g_list_find(playlist, current_entry);
+
+        // Loop back if need be
+        if (current_list_entry->next == NULL)
+            current_entry = (PlaylistEntry*)playlist->data;
+
+        else
+            current_entry = (PlaylistEntry*)current_list_entry->next->data;
+    }
     else
-        current_entry = (PlaylistEntry*)current_list_entry->next->data;
+        select_random_song();
 
     update_playback();
 }
 
 static void on_backwards(GtkButton*)
 {
-    GList* current_list_entry = g_list_find(playlist, current_entry);
+    if (g_list_length(playlist) == 1)
+    {
+        set_audio_stream_progress(audio_stream, 0.0f);
+        return;
+    }
 
-    // Loop back if  need be
-    if (current_list_entry->prev == NULL)
-        current_entry = (PlaylistEntry*)g_list_last(playlist)->data;
+    if (!shuffle)
+    {
+        GList* current_list_entry = g_list_find(playlist, current_entry);
 
+        // Loop back if  need be
+        if (current_list_entry->prev == NULL)
+            current_entry = (PlaylistEntry*)g_list_last(playlist)->data;
+
+        else
+            current_entry = (PlaylistEntry*)current_list_entry->prev->data;
+    }
     else
-        current_entry = (PlaylistEntry*)current_list_entry->prev->data;
+        select_random_song();
 
     update_playback();
 }
@@ -84,7 +123,7 @@ static void on_mute(GtkToggleButton*)
 
 static void on_shuffle(GtkToggleButton*)
 {
-
+    shuffle = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(shuffle_button));
 }
 
 void init_playback_ui(GtkBuilder* builder)
