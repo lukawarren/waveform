@@ -5,3 +5,9 @@
 .fully-bright-colour {
     filter: brightness(100%);
 }
+
+.drag-entry {
+    background-color: white;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+}

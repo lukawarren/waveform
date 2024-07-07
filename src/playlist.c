@@ -12,6 +12,8 @@ static GtkWidget* playlist_page;
 static GtkWidget* empty_page;
 static GtkWindow* window;
 
+static GtkWidget* create_ui_playlist_entry(PlaylistEntry* playlist_entry);
+
 static void update_stack()
 {
     gint length = g_list_length(playlist);
@@ -60,6 +62,29 @@ static void on_playlist_entry_playback_toggled(GtkButton*)
     toggle_playback();
 }
 
+static GdkContentProvider* on_drag_prepare(GtkDragSource*, double, double, GtkWidget* self)
+{
+    return gdk_content_provider_new_typed(adw_action_row_get_type(), self);
+}
+
+static void on_drag_begin(GtkDragSource*, GdkDrag* drag, GtkWidget* widget)
+{
+    // Get playlist entry
+    PlaylistEntry* entry = (PlaylistEntry*)g_object_get_data(G_OBJECT(widget), "playlist_entry");
+
+    // Work out size for new dummy widget
+    int width = gtk_widget_get_width(widget);
+    int height = gtk_widget_get_height(widget);
+
+    // Create new dummy widget
+    GtkWidget* dummy_widget = create_ui_playlist_entry(entry);
+    gtk_widget_add_css_class(dummy_widget, "drag-entry");
+    gtk_widget_set_size_request(dummy_widget, width, height);
+
+    GtkWidget* icon = gtk_drag_icon_get_for_drag(drag);
+    gtk_drag_icon_set_child(GTK_DRAG_ICON(icon), dummy_widget);
+}
+
 static GtkWidget* create_ui_playlist_entry(PlaylistEntry* playlist_entry)
 {
     // Row
@@ -91,6 +116,20 @@ static GtkWidget* create_ui_playlist_entry(PlaylistEntry* playlist_entry)
 
     // Easy way to find pause button once row found
     g_object_set_data(G_OBJECT(entry), "pause_button", pause_button);
+
+    // Same with playlist entry for drag and drop
+    g_object_set_data(G_OBJECT(entry), "playlist_entry", playlist_entry);
+
+    // Drag and drop source
+    GtkDragSource* drag_source = gtk_drag_source_new();
+    gtk_drag_source_set_actions(drag_source, GDK_ACTION_MOVE);
+    gtk_widget_add_controller(entry, GTK_EVENT_CONTROLLER(drag_source));
+    g_signal_connect(drag_source, "prepare", G_CALLBACK(on_drag_prepare), entry);
+    g_signal_connect(drag_source, "drag-begin", G_CALLBACK(on_drag_begin), entry);
+
+    // Drag and drop dest
+    GtkDropTarget* target = gtk_drop_target_new(G_TYPE_INVALID, GDK_ACTION_MOVE);
+    gtk_widget_add_controller(entry, GTK_EVENT_CONTROLLER(target));
 
     return entry;
 }
