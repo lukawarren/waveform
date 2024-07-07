@@ -39,7 +39,7 @@ static void on_playlist_entry_removed(GtkButton* button)
         widget = gtk_widget_get_parent(widget);
 
     // Remove from playlist
-    PlaylistEntry* entry = g_object_get_data(G_OBJECT(widget), "entry");
+    PlaylistEntry* entry = g_object_get_data(G_OBJECT(widget), "playlist_entry");
     free_playlist_entry(entry);
     playlist = g_list_remove(playlist, entry);
 
@@ -51,20 +51,14 @@ static void on_playlist_entry_removed(GtkButton* button)
     update_playback();
 }
 
-static void on_playlist_entry_clicked(GtkGestureClick*, gint, gdouble, gdouble, gpointer data)
+static void on_playlist_entry_clicked(GtkGestureClick*, gint, gdouble, gdouble, PlaylistEntry* entry)
 {
-    PlaylistEntry* entry = (PlaylistEntry*)data;
     set_new_playback_entry(entry);
 }
 
 static void on_playlist_entry_playback_toggled(GtkButton*)
 {
     toggle_playback();
-}
-
-static GdkContentProvider* on_drag_prepare(GtkDragSource*, double, double, GtkWidget* self)
-{
-    return gdk_content_provider_new_typed(adw_action_row_get_type(), self);
 }
 
 static void on_drag_begin(GtkDragSource*, GdkDrag* drag, GtkWidget* widget)
@@ -83,6 +77,37 @@ static void on_drag_begin(GtkDragSource*, GdkDrag* drag, GtkWidget* widget)
 
     GtkWidget* icon = gtk_drag_icon_get_for_drag(drag);
     gtk_drag_icon_set_child(GTK_DRAG_ICON(icon), dummy_widget);
+}
+
+static void on_drop_target_drop(GtkDropTarget*, const GValue* value, gdouble, gdouble, GtkWidget* destination)
+{
+    GtkWidget* source = g_value_get_object(value);
+    if (source == destination)
+        return;
+
+    PlaylistEntry* source_entry = g_object_get_data(G_OBJECT(source), "playlist_entry");
+    PlaylistEntry* destination_entry = g_object_get_data(G_OBJECT(destination), "playlist_entry");
+
+    int source_position = g_list_index(playlist, source_entry);
+    int destination_position = g_list_index(playlist, destination_entry);
+    gtk_list_box_remove(GTK_LIST_BOX(playlist_list), source);
+    gtk_list_box_remove(GTK_LIST_BOX(playlist_list), destination);
+
+    // Swap widgets within list
+    if (destination_position > source_position)
+    {
+        gtk_list_box_insert(GTK_LIST_BOX(playlist_list), destination, source_position);
+        gtk_list_box_insert(GTK_LIST_BOX(playlist_list), source, destination_position);
+    }
+    else
+    {
+        gtk_list_box_insert(GTK_LIST_BOX(playlist_list), source, destination_position);
+        gtk_list_box_insert(GTK_LIST_BOX(playlist_list), destination, source_position);
+    }
+
+    // Swap elements in playlist
+    g_list_nth(playlist, source_position)->data = destination_entry;
+    g_list_nth(playlist, destination_position)->data = source_entry;
 }
 
 static GtkWidget* create_ui_playlist_entry(PlaylistEntry* playlist_entry)
@@ -114,22 +139,30 @@ static GtkWidget* create_ui_playlist_entry(PlaylistEntry* playlist_entry)
     g_signal_connect(remove_button, "clicked", G_CALLBACK(on_playlist_entry_removed), NULL);
     adw_action_row_add_suffix(ADW_ACTION_ROW(entry), remove_button);
 
-    // Easy way to find pause button once row found
+    // Convenience bindings
     g_object_set_data(G_OBJECT(entry), "pause_button", pause_button);
-
-    // Same with playlist entry for drag and drop
     g_object_set_data(G_OBJECT(entry), "playlist_entry", playlist_entry);
 
     // Drag and drop source
     GtkDragSource* drag_source = gtk_drag_source_new();
     gtk_drag_source_set_actions(drag_source, GDK_ACTION_MOVE);
+    gtk_drag_source_set_content(
+        drag_source,
+        gdk_content_provider_new_typed(
+            adw_action_row_get_type(),
+            entry
+        )
+    );
     gtk_widget_add_controller(entry, GTK_EVENT_CONTROLLER(drag_source));
-    g_signal_connect(drag_source, "prepare", G_CALLBACK(on_drag_prepare), entry);
     g_signal_connect(drag_source, "drag-begin", G_CALLBACK(on_drag_begin), entry);
 
     // Drag and drop dest
     GtkDropTarget* target = gtk_drop_target_new(G_TYPE_INVALID, GDK_ACTION_MOVE);
+    gtk_drop_target_set_gtypes(target, (GType[1]) {
+        adw_action_row_get_type()
+    }, 1);
     gtk_widget_add_controller(entry, GTK_EVENT_CONTROLLER(target));
+    g_signal_connect(target, "drop", G_CALLBACK(on_drop_target_drop), entry);
 
     return entry;
 }
@@ -146,12 +179,6 @@ static void add_playlist_entry(const char* name, const gchar* artist, const gcha
     // Add to UI
     GtkWidget* widget = create_ui_playlist_entry(entry);
     gtk_list_box_append(GTK_LIST_BOX(playlist_list), widget);
-
-    // Create link between playlist entry and UI for later logic
-    g_object_set_data(G_OBJECT(widget), "playlist_entry", entry);
-
-    // Bind list entry to button for event callback
-    g_object_set_data(G_OBJECT(widget), "entry", entry);
 }
 
 static bool add_file_to_playlist(GFile* file)
