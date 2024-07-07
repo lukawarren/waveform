@@ -115,7 +115,7 @@ static void add_playlist_entry(const char* name, const gchar* artist, const gcha
     g_object_set_data(G_OBJECT(widget), "entry", entry);
 }
 
-static void add_file_to_playlist(GFile* file)
+static bool add_file_to_playlist(GFile* file)
 {
     // Create SDL music object
     char* file_path = g_file_get_path(file);
@@ -124,7 +124,7 @@ static void add_file_to_playlist(GFile* file)
     {
         g_critical("failed to load %s", file_path);
         g_free(file_path);
-        return;
+        return false;
     }
 
     // Extract info
@@ -155,6 +155,7 @@ static void add_file_to_playlist(GFile* file)
 
     // Add to program
     add_playlist_entry(name_s, artist_s, file_path);
+    return true;
 }
 
 static void on_playlist_add_dialog_ready(GObject* dialog, GAsyncResult* result, gpointer)
@@ -166,11 +167,20 @@ static void on_playlist_add_dialog_ready(GObject* dialog, GAsyncResult* result, 
         return;
     }
 
+    bool one_or_more_failures = false;
     for (guint i = 0; i < g_list_model_get_n_items(list); ++i)
     {
         GFile* file = g_list_model_get_item(list, i);
-        add_file_to_playlist(file);
+        if (!add_file_to_playlist(file))
+            one_or_more_failures = true;
         g_object_unref(file);
+    }
+
+    if (one_or_more_failures)
+    {
+        GtkAlertDialog* alert = gtk_alert_dialog_new("Failed To Load Selection");
+        gtk_alert_dialog_set_detail(alert, "One or more files failed to load");
+        gtk_alert_dialog_show(alert, window);
     }
 
     g_object_unref(list);
@@ -197,7 +207,7 @@ void on_playlist_entry_add(GtkButton*)
     // Set filter to audio files only
     GListStore* filters = g_list_store_new(GTK_TYPE_FILE_FILTER);
     GtkFileFilter* filter = gtk_file_filter_new();
-    gtk_file_filter_set_name(filter, "Audio files");
+    gtk_file_filter_set_name(filter, "Audio Files");
     gtk_file_filter_add_mime_type(filter, "audio/*");
     g_list_store_append(filters, filter);
     gtk_file_dialog_set_filters(dialog, G_LIST_MODEL(filters));
@@ -306,6 +316,7 @@ static bool load_playlist_from_file(GFile* file)
 
         // Read each line
         GDataInputStream* data_stream = g_data_input_stream_new(G_INPUT_STREAM(stream));
+        bool one_or_more_failures = false;
         while (true)
         {
             gsize length;
@@ -316,9 +327,17 @@ static bool load_playlist_from_file(GFile* file)
 
             // file will never be NULL
             GFile* file = g_file_new_for_path(line);
-            add_file_to_playlist(file);
+            if (!add_file_to_playlist(file))
+                one_or_more_failures = true;
             g_object_unref(file);
             g_free(line);
+        }
+
+        if (one_or_more_failures)
+        {
+            GtkAlertDialog* alert = gtk_alert_dialog_new("Failed To Load Playlist");
+            gtk_alert_dialog_set_detail(alert, "One or more files failed to load");
+            gtk_alert_dialog_show(alert, window);
         }
 
         // Update UI
@@ -363,6 +382,18 @@ void on_playlist_load()
 {
     GtkFileDialog* dialog = gtk_file_dialog_new();
     set_dialog_directory(dialog);
+    gtk_file_dialog_set_title(dialog, "Select a Playlist");
+
+    // Set filter to playlist files
+    GListStore* filters = g_list_store_new(GTK_TYPE_FILE_FILTER);
+    GtkFileFilter* filter = gtk_file_filter_new();
+    gtk_file_filter_set_name(filter, "Playlist Files");
+    gtk_file_filter_add_suffix(filter, "waveform");
+    g_list_store_append(filters, filter);
+    gtk_file_dialog_set_filters(dialog, G_LIST_MODEL(filters));
+    g_object_unref(filter);
+    g_object_unref(filters);
+
     gtk_file_dialog_open(dialog, window, NULL, on_load_dialog_done, NULL);
 }
 
