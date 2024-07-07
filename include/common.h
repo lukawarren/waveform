@@ -9,4 +9,4 @@
 #define CHANNELS 2
 
 // Leads to smooth "playback paused" animation at the cost of idle CPU usage
-#define CONTINUE_VISUALISATION_WHEN_PAUSED 1
+#define CONTINUE_VISUALISATION_WHEN_PAUSED 0

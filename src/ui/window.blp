@@ -64,25 +64,38 @@ Adw.Window window {
                                         value: 0.0;
                                     };
                                 }
-                                Gtk.Grid {
-                                    orientation: horizontal;
-                                    halign: center;
+                                Gtk.CenterBox {
+                                    margin-start: 12;
+                                    margin-end: 12;
                                     margin-top: 6;
                                     margin-bottom: 6;
-                                    Gtk.Button backwards_button {
-                                        icon-name: "media-skip-backward";
-                                        styles ["circular", "raised"]
-                                    }
-                                    Gtk.Button play_button {
-                                        margin-start: 20;
-                                        margin-end: 20;
-                                        icon-name: "media-playback-start";
-                                        styles ["circular", "raised"]
-                                    }
-                                    Gtk.Button forwards_button {
-                                        icon-name: "media-skip-forward";
-                                        styles ["circular", "raised"]
-                                    }
+
+                                    start-widget: Gtk.ToggleButton shuffle_button {
+                                        styles ["circular" ]
+                                        icon-name: "media-playlist-shuffle";
+                                    };
+
+                                    center-widget: Gtk.Box {
+                                        Gtk.Button backwards_button {
+                                            icon-name: "media-skip-backward";
+                                            styles ["circular", "raised"]
+                                        }
+                                        Gtk.Button play_button {
+                                            margin-start: 20;
+                                            margin-end: 20;
+                                            icon-name: "media-playback-start";
+                                            styles ["circular", "raised"]
+                                        }
+                                        Gtk.Button forwards_button {
+                                            icon-name: "media-skip-forward";
+                                            styles ["circular", "raised"]
+                                        }
+                                    };
+
+                                    end-widget: Gtk.ToggleButton mute_button {
+                                        styles ["circular"]
+                                        icon-name: "audio-volume-high";
+                                    };
                                 }
                             }
                         }

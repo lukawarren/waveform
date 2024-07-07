@@ -14,6 +14,8 @@ static GtkWidget* forwards_button;
 static GtkWidget* playback_slider;
 static GtkWidget* playback_bar;
 static GtkWidget* drawing_area;
+static GtkWidget* mute_button;
+static GtkWidget* shuffle_button;
 
 // Actual playback state
 PlaylistEntry* current_entry = NULL;
@@ -72,6 +74,19 @@ static void on_slider_moved(GtkRange*, GtkScrollType*, gdouble value, gpointer)
     set_audio_stream_progress(audio_stream, value);
 }
 
+static void on_mute(GtkToggleButton*)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(mute_button)))
+        mute_audio();
+    else
+        unmute_audio();
+}
+
+static void on_shuffle(GtkToggleButton*)
+{
+
+}
+
 void init_playback_ui(GtkBuilder* builder)
 {
     stack               = GET_WIDGET("playback_stack");
@@ -83,11 +98,15 @@ void init_playback_ui(GtkBuilder* builder)
     forwards_button     = GET_WIDGET("forwards_button");
     playback_slider     = GET_WIDGET("playback_slider");
     playback_bar        = GET_WIDGET("playback_bar");
+    mute_button         = GET_WIDGET("mute_button");
+    shuffle_button      = GET_WIDGET("shuffle_button");
 
     g_signal_connect(backwards_button,  "clicked",      G_CALLBACK(on_backwards),    NULL);
     g_signal_connect(play_button,       "clicked",      G_CALLBACK(on_play),         NULL);
     g_signal_connect(forwards_button,   "clicked",      G_CALLBACK(on_forwards),     NULL);
     g_signal_connect(playback_slider,   "change-value", G_CALLBACK(on_slider_moved), NULL);
+    g_signal_connect(mute_button,       "clicked",      G_CALLBACK(on_mute),         NULL);
+    g_signal_connect(shuffle_button,    "clicked",      G_CALLBACK(on_shuffle),      NULL);
 
     visualiser_init(drawing_area);
 

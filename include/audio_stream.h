@@ -22,4 +22,6 @@ void set_audio_stream_progress(AudioStream* stream, double progress);
 void free_audio_stream(AudioStream* stream);
 
 void init_audio();
+void mute_audio();
+void unmute_audio();
 void close_audio();

@@ -6,6 +6,8 @@
 #include <adwaita.h>
 #include <SDL2/SDL.h>
 
+static bool muted = false;
+
 AudioStream* create_audio_stream(PlaylistEntry* entry)
 {
     AudioStream* stream = malloc(sizeof(AudioStream));
@@ -26,6 +28,7 @@ static void gui_idle_callback(gpointer audio_packet)
 {
     AudioPacket* packet = (AudioPacket*)audio_packet;
     on_audio_stream_advanced(packet);
+    free(packet->data);
     free(packet);
 }
 
@@ -33,9 +36,14 @@ static void on_effect_called(int, void* buffer, int length, void*)
 {
     // Enqueue work to GUI thread
     AudioPacket* packet = malloc(sizeof(AudioPacket));
-    packet->data = buffer;
+    packet->data = malloc(length);
+    memcpy(packet->data, buffer, length);
     packet->length = length / sizeof(packet->data[0]);
     g_idle_add_once(gui_idle_callback, packet);
+
+    // Simulated being muted
+    if (muted)
+        memset(buffer, 0, length);
 }
 
 void toggle_audio_stream(AudioStream* stream)
@@ -101,6 +109,19 @@ void init_audio()
 
     float fps = (float)AUDIO_FREQUENCY / (float)PACKET_SIZE;
     printf("running at approx. %.2f FPS\n", fps);
+}
+
+void mute_audio()
+{
+    // We cannot mute music in the proper way (i.e by using SDL Mixer) as it
+    // will "zero out" the data that is sent to the callback, breaking the
+    // visualisation
+    muted = true;
+}
+
+void unmute_audio()
+{
+    muted = false;
 }
 
 void close_audio()
