@@ -22,6 +22,9 @@ static PlaylistEntry* current_entry = NULL;
 static AudioStream* audio_stream = NULL;
 static bool shuffle = false;
 
+static void destroy_audio_stream();
+static void remake_audio_stream();
+
 static void update_stack()
 {
     gint length = g_list_length(playlist);
@@ -52,6 +55,7 @@ static void on_forwards(GtkButton*)
     if (g_list_length(playlist) == 1)
     {
         set_audio_stream_progress(audio_stream, 0.0f);
+        remake_audio_stream();
         return;
     }
 
@@ -77,6 +81,7 @@ static void on_backwards(GtkButton*)
     if (g_list_length(playlist) == 1)
     {
         set_audio_stream_progress(audio_stream, 0.0f);
+        remake_audio_stream();
         return;
     }
 
@@ -165,6 +170,13 @@ void init_playback_ui(GtkBuilder* builder)
     update_playback();
 }
 
+static void remake_audio_stream()
+{
+    destroy_audio_stream();
+    audio_stream = create_audio_stream(current_entry);
+    on_play(NULL);
+}
+
 static void destroy_audio_stream()
 {
     if (audio_stream != NULL)
@@ -185,11 +197,7 @@ void update_playback()
 
         // Create new audio stream if song changed
         if (audio_stream == NULL || current_entry != audio_stream->playlist_entry)
-        {
-            destroy_audio_stream();
-            audio_stream = create_audio_stream(current_entry);
-            on_play(NULL);
-        }
+            remake_audio_stream();
     }
     else
     {
