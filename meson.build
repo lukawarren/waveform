@@ -4,7 +4,7 @@ project(
     version: '0.1.0',
     default_options: [
         'c_std=c11',
-        'warning_level=everything'
+        'warning_level=2'
     ]
 )
 
@@ -14,7 +14,7 @@ maths_dep = cc.find_library('m', required : false)
 gtk4_dep = dependency('gtk4', version: '>= 4.0')
 libadwaita_dep = dependency('libadwaita-1', version: '>= 1.0')
 sdl2_dep = dependency('sdl2', version: '>= 2.0.0')
-sdl2mixer_dep = dependency('sdl2_mixer', version: '>= 2.0.0')
+sdl2mixer_dep = dependency('sdl2_mixer_custom', version: '>= 2.0.0')
 fftw_dep = dependency('fftw3')
 gnome = import('gnome')
 

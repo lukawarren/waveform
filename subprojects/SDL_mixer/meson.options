@@ -1,0 +1,11 @@
+option(
+  'flac',
+  type: 'feature',
+  description: 'FLAC support',
+)
+
+option(
+  'opus',
+  type: 'feature',
+  description: 'Opus support',
+)

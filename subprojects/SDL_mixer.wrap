@@ -1,0 +1,5 @@
+[wrap-file]
+directory = SDL_mixer
+
+[provide]
+dependency_names = sdl2_mixer_custom
