@@ -1,4 +1,5 @@
 #include <adwaita.h>
+#include <fftw3.h>
 #include "playlist.h"
 #include "playback.h"
 #include "preferences.h"
@@ -37,6 +38,7 @@ static GOptionEntry option_entries[] =
 
 static void on_activate(GtkApplication* app)
 {
+    fftwf_make_planner_thread_safe();
     init_preferences();
     init_audio();
 

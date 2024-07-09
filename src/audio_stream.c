@@ -2,13 +2,13 @@
 #include "playback.h"
 #include "common.h"
 #include "preferences.h"
+#include "equaliser.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <adwaita.h>
 #include <SDL2/SDL.h>
 
 static bool muted = false;
-static float playback_speed;
 
 AudioStream* create_audio_stream(PlaylistEntry* entry)
 {
@@ -27,6 +27,7 @@ AudioStream* create_audio_stream(PlaylistEntry* entry)
     if (stream->music == NULL)
         g_critical("failed to load %s", entry->path);
 
+    Mix_PlayMusic(stream->music, 0);
     return stream;
 }
 
@@ -34,17 +35,19 @@ static void gui_idle_callback(gpointer audio_packet)
 {
     AudioPacket* packet = (AudioPacket*)audio_packet;
     on_audio_stream_advanced(packet);
-    free(packet->data);
     free(packet);
 }
 
 static void on_effect_called(int, void* buffer, int length, void*)
 {
-    // Enqueue work to GUI thread
+    // Create packet
     AudioPacket* packet = malloc(sizeof(AudioPacket));
-    packet->data = malloc(length);
-    memcpy(packet->data, buffer, length);
+    packet->data = (float*)buffer;
     packet->length = length / sizeof(packet->data[0]);
+
+    equaliser_process_packet(packet);
+
+    // Enqueue work to GUI thread
     g_idle_add_once(gui_idle_callback, packet);
 
     // Simulate being muted
@@ -66,13 +69,7 @@ void toggle_audio_stream(AudioStream* stream)
             NULL
         );
     #endif
-
-        Mix_FadeInMusicPos(
-            stream->music,
-            0,
-            FADE_DURATION_MS * playback_speed,
-            stream->fade_pos
-        );
+        Mix_ResumeMusic();
     }
 
     else
@@ -80,9 +77,7 @@ void toggle_audio_stream(AudioStream* stream)
     #if !(CONTINUE_VISUALISATION_WHEN_PAUSED)
         Mix_UnregisterAllEffects(MIX_CHANNEL_POST);
     #endif
-
-        stream->fade_pos = Mix_GetMusicPosition(stream->music);
-        Mix_FadeOutMusic(FADE_DURATION_MS * playback_speed);
+        Mix_PauseMusic();
     }
 }
 
@@ -121,12 +116,12 @@ void init_audio()
     );
 #endif
 
-    playback_speed = preferences_get_playback_speed();
-    Mix_SetSpeed(playback_speed);
+    Mix_SetSpeed(preferences_get_playback_speed());
+
+    equaliser_init();
 
     float fps = (float)AUDIO_FREQUENCY / (float)PACKET_SIZE;
     printf("running at approx. %.2f FPS\n", fps);
-
 }
 
 void mute_audio()
@@ -144,11 +139,11 @@ void unmute_audio()
 
 void set_audio_speed(float speed)
 {
-    playback_speed = speed;
     Mix_SetSpeed(speed);
 }
 
 void close_audio()
 {
+    equaliser_destroy();
     Mix_CloseAudio();
 }

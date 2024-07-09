@@ -69,31 +69,31 @@ static int frequency_to_fft_index(float frequency)
 
 static void add_fft_frame()
 {
-    double* buffer = fftw_alloc_real(FRAME_SIZE);
-    fftw_complex* fft_output = fftw_alloc_complex(FRAME_SIZE);
+    float* buffer = fftwf_alloc_real(FRAME_SIZE);
+    fftwf_complex* fft_output = fftwf_alloc_complex(FRAME_SIZE);
 
     // Feed input audio
     for (int i = 0; i < FRAME_SIZE; ++i)
         buffer[i] = audio_data[i];
 
     // Perform DFT
-    fftw_plan plan = fftw_plan_dft_r2c_1d(
+    fftwf_plan plan = fftwf_plan_dft_r2c_1d(
         FRAME_SIZE,
         buffer,
         fft_output,
         FFTW_ESTIMATE
     );
-    fftw_execute_dft_r2c(plan, buffer, fft_output);
+    fftwf_execute_dft_r2c(plan, buffer, fft_output);
 
     // Add to frame
     for (int i = 0; i < FRAME_SIZE; ++i)
-        processed_frames[current_frame][i] = (float)cabs(fft_output[i]);
+        processed_frames[current_frame][i] = cabsf(fft_output[i]);
     current_frame = (current_frame + 1) % N_FRAMES;
 
     // Free
-    fftw_destroy_plan(plan);
-    fftw_free(buffer);
-    fftw_free(fft_output);
+    fftwf_destroy_plan(plan);
+    fftwf_free(buffer);
+    fftwf_free(fft_output);
 }
 
 static void add_time_domain_frame()
@@ -298,7 +298,6 @@ void visualiser_set_data(AudioPacket* packet)
 {
     g_assert(packet->length / CHANNELS == PACKET_SIZE);
     g_assert(PACKET_SIZE == FRAME_SIZE);
-    g_assert(CHANNELS == 2);
 
     // Average over each channel
     for (int i = 0; i < packet->length / CHANNELS; ++i)
