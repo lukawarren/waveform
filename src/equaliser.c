@@ -106,6 +106,8 @@ static float* apply_equaliser(float* previous, float* current, float* next)
     );
     fftwf_execute_dft_r2c(plan_left, samples_buffer, left_fft);
     fftwf_execute_dft_r2c(plan_right, samples_buffer + PACKET_SIZE * 3, right_fft);
+    fftwf_destroy_plan(plan_left);
+    fftwf_destroy_plan(plan_right);
 
     // Modify audio in time domain
     int n_ranges = preferences_get_n_frequency_ranges();
@@ -132,6 +134,8 @@ static float* apply_equaliser(float* previous, float* current, float* next)
     );
     fftwf_execute_dft_c2r(inverse_plan_left, left_fft, left_ifft);
     fftwf_execute_dft_c2r(inverse_plan_right, right_fft, right_ifft);
+    fftwf_destroy_plan(inverse_plan_left);
+    fftwf_destroy_plan(inverse_plan_right);
 
     // Retrieve processed samples
     FILL output_buffer[i * 2 + 0] = left_ifft[PACKET_SIZE + i] / (float)PACKET_SIZE / 3.0f;
