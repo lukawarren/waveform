@@ -8,6 +8,7 @@
 #include <SDL2/SDL.h>
 
 static bool muted = false;
+static float playback_speed;
 
 AudioStream* create_audio_stream(PlaylistEntry* entry)
 {
@@ -21,12 +22,10 @@ AudioStream* create_audio_stream(PlaylistEntry* entry)
     stream->is_playing = false;
     stream->playlist_entry = entry;
     stream->music = Mix_LoadMUS(entry->path);
+    stream->fade_pos = 0.0f;
 
     if (stream->music == NULL)
         g_critical("failed to load %s", entry->path);
-
-    else
-        Mix_PlayMusic(stream->music, 0);
 
     return stream;
 }
@@ -67,7 +66,13 @@ void toggle_audio_stream(AudioStream* stream)
             NULL
         );
     #endif
-        Mix_ResumeMusic();
+
+        Mix_FadeInMusicPos(
+            stream->music,
+            0,
+            FADE_DURATION_MS * playback_speed,
+            stream->fade_pos
+        );
     }
 
     else
@@ -75,7 +80,9 @@ void toggle_audio_stream(AudioStream* stream)
     #if !(CONTINUE_VISUALISATION_WHEN_PAUSED)
         Mix_UnregisterAllEffects(MIX_CHANNEL_POST);
     #endif
-        Mix_PauseMusic();
+
+        stream->fade_pos = Mix_GetMusicPosition(stream->music);
+        Mix_FadeOutMusic(FADE_DURATION_MS * playback_speed);
     }
 }
 
@@ -114,7 +121,8 @@ void init_audio()
     );
 #endif
 
-    Mix_SetSpeed(preferences_get_playback_speed());
+    playback_speed = preferences_get_playback_speed();
+    Mix_SetSpeed(playback_speed);
 
     float fps = (float)AUDIO_FREQUENCY / (float)PACKET_SIZE;
     printf("running at approx. %.2f FPS\n", fps);
@@ -136,6 +144,7 @@ void unmute_audio()
 
 void set_audio_speed(float speed)
 {
+    playback_speed = speed;
     Mix_SetSpeed(speed);
 }
 

@@ -8,6 +8,7 @@ typedef struct AudioStream
     bool is_playing;
     Mix_Music* music;
     PlaylistEntry* playlist_entry;
+    double fade_pos;
 } AudioStream;
 
 typedef struct AudioPacket

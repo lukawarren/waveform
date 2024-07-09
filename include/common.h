@@ -7,6 +7,7 @@
 #define TARGET_FPS 60
 #define PACKET_SIZE (AUDIO_FREQUENCY / TARGET_FPS)
 #define CHANNELS 2
+#define FADE_DURATION_MS 200
 
 // Leads to smooth "playback paused" animation at the cost of idle CPU usage
 #define CONTINUE_VISUALISATION_WHEN_PAUSED 0
