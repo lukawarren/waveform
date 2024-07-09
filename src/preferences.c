@@ -1,11 +1,13 @@
 #include "preferences.h"
 #include "common.h"
+#include "audio_stream.h"
 #include <adwaita.h>
 
 static GSettings* settings;
 static GObject* window;
 
-static void on_reset_preferences();
+static void on_reset_preferences(GtkButton*);
+static void on_playback_speed_changed(GtkAdjustment*, gpointer);
 
 void init_preferences()
 {
@@ -26,6 +28,7 @@ void create_preferences_window()
     GtkWidget* maximum_frequency    = GET_WIDGET("maximum_frequency");
     GtkWidget* use_bark_scale       = GET_WIDGET("use_bark_scale");
     GtkWidget* gain                 = GET_WIDGET("gain");
+    GtkWidget* playback_speed       = GET_WIDGET("playback_speed");
     GtkWidget* reset_button         = GET_WIDGET("reset_button");
 
     g_settings_bind(
@@ -84,7 +87,17 @@ void create_preferences_window()
         G_SETTINGS_BIND_DEFAULT
     );
 
+    g_settings_bind(
+        settings,
+        "playback-speed",
+        playback_speed,
+        "value",
+        G_SETTINGS_BIND_DEFAULT
+    );
+
+    GtkAdjustment* speed_adjustment = adw_spin_row_get_adjustment(ADW_SPIN_ROW(playback_speed));
     g_signal_connect(reset_button, "clicked", G_CALLBACK(on_reset_preferences), NULL);
+    g_signal_connect(speed_adjustment, "value-changed", G_CALLBACK(on_playback_speed_changed), NULL);
 
     g_object_unref(builder);
 }
@@ -129,7 +142,12 @@ bool preferences_get_use_bark_scale()
 
 float preferences_get_gain()
 {
-    return (float)g_settings_get_int(settings, "gain") / 100.0f;
+    return (float)g_settings_get_int(settings, "gain") / 10.0f;
+}
+
+float preferences_get_playback_speed()
+{
+    return (float)g_settings_get_double(settings, "playback-speed");
 }
 
 static void on_reset_confirmed(GObject* self, GAsyncResult* result, gpointer)
@@ -149,10 +167,11 @@ static void on_reset_confirmed(GObject* self, GAsyncResult* result, gpointer)
         g_settings_reset(settings, "maximum-frequency");
         g_settings_reset(settings, "use-bark-scale");
         g_settings_reset(settings, "gain");
+        g_settings_reset(settings, "playback-speed");
     }
 }
 
-static void on_reset_preferences()
+static void on_reset_preferences(GtkButton*)
 {
     GtkAlertDialog* dialog = gtk_alert_dialog_new("Are you sure you want to reset all preferences?");
 
@@ -173,4 +192,9 @@ static void on_reset_preferences()
         NULL
     );
     g_object_unref(dialog);
+}
+
+static void on_playback_speed_changed(GtkAdjustment* adjustment, gpointer)
+{
+    set_audio_speed(gtk_adjustment_get_value(adjustment));
 }

@@ -24,4 +24,5 @@ void free_audio_stream(AudioStream* stream);
 void init_audio();
 void mute_audio();
 void unmute_audio();
+void set_audio_speed(float speed);
 void close_audio();

@@ -37,6 +37,7 @@ static GOptionEntry option_entries[] =
 
 static void on_activate(GtkApplication* app)
 {
+    init_preferences();
     init_audio();
 
     // Create window
@@ -83,7 +84,6 @@ static void on_activate(GtkApplication* app)
     g_object_unref(css_provider);
 
     // Init screens
-    init_preferences();
     init_playlist_ui(builder, GTK_WINDOW(window));
     init_playback_ui(builder);
 

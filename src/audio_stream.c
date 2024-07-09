@@ -1,6 +1,7 @@
 #include "audio_stream.h"
 #include "playback.h"
 #include "common.h"
+#include "preferences.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <adwaita.h>
@@ -113,8 +114,11 @@ void init_audio()
     );
 #endif
 
+    Mix_SetSpeed(preferences_get_playback_speed());
+
     float fps = (float)AUDIO_FREQUENCY / (float)PACKET_SIZE;
     printf("running at approx. %.2f FPS\n", fps);
+
 }
 
 void mute_audio()
@@ -128,6 +132,11 @@ void mute_audio()
 void unmute_audio()
 {
     muted = false;
+}
+
+void set_audio_speed(float speed)
+{
+    Mix_SetSpeed(speed);
 }
 
 void close_audio()
