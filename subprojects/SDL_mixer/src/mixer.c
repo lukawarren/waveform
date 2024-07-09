@@ -62,6 +62,7 @@ SDL_COMPILE_TIME_ASSERT(SDL_MIXER_PATCHLEVEL_max, SDL_MIXER_PATCHLEVEL <= 99);
 static int audio_opened = 0;
 static SDL_AudioSpec mixer;
 static SDL_AudioDeviceID audio_device;
+static int original_mixer_frequency;
 
 typedef struct _Mix_effectinfo
 {
@@ -501,6 +502,10 @@ int Mix_OpenAudioDevice(int frequency, Uint16 format, int nchannels, int chunksi
     if ((audio_device = SDL_OpenAudioDevice(device, 0, &desired, &mixer, allowed_changes)) == 0) {
         return -1;
     }
+
+    /* For speed hack */
+    original_mixer_frequency = mixer.freq;
+
 #if 0
     PrintFormat("Audio device", &mixer);
 #endif
@@ -1791,6 +1796,28 @@ int Mix_MasterVolume(int volume)
     }
     SDL_AtomicSet(&master_volume, volume);
     return prev_volume;
+}
+
+/**
+ * Custom functions introduced for "Waveform" program
+ */
+
+int Mix_SetSpeed(double speed)
+{
+    Mix_LockAudio();
+
+    // Destroy old device
+    SDL_AudioDeviceID old_device = audio_device;
+    SDL_CloseAudioDevice(old_device);
+
+    // Recreate audio devicec with speed hack
+    mixer.freq = (int)((double)original_mixer_frequency * speed);
+    if ((audio_device = SDL_OpenAudioDevice(NULL, 0, &mixer, &mixer, 0)) == 0)
+        return -1;
+
+    SDL_PauseAudioDevice(audio_device, 0);
+    Mix_UnlockAudio();
+    return 0;
 }
 
 /* end of mixer.c ... */

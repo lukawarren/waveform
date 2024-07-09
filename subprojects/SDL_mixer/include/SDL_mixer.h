@@ -2793,6 +2793,12 @@ extern DECLSPEC Mix_Chunk * SDLCALL Mix_GetChunk(int channel);
  */
 extern DECLSPEC void SDLCALL Mix_CloseAudio(void);
 
+
+/**
+ * Custom functions introduced for "Waveform" program
+ */
+extern DECLSPEC int SDLCALL Mix_SetSpeed(double speed);
+
 /* We'll use SDL for reporting errors */
 
 /**
