@@ -1,4 +1,5 @@
 #include "equaliser.h"
+#include "preferences.h"
 #include "common.h"
 #include <adwaita.h>
 #include <complex.h>
@@ -22,6 +23,7 @@ static float* left_ifft = NULL;
 static float* right_ifft = NULL;
 
 static float* apply_equaliser(float* previous, float* current, float* next);
+static void modify_frequency_range(float min, float max, float multipiler);
 static float complex modify_magnitude(float complex c, float multiplier);
 
 void equaliser_init()
@@ -105,31 +107,15 @@ static float* apply_equaliser(float* previous, float* current, float* next)
     fftwf_execute_dft_r2c(plan_left, samples_buffer, left_fft);
     fftwf_execute_dft_r2c(plan_right, samples_buffer + PACKET_SIZE * 3, right_fft);
 
-    /*
-        Work out bins.
-
-        Because of the finite bin size, the lower bin may not be 0, even if the
-        frequency is. Likewise, the upper bin may not be the maximum it can be
-        even if the upper frequency is 20,000 Hz!
-
-        Adding a bit of leeway helps fix this for when the lower frequency is
-        0 Hz, for example.
-    */
-    float minimum_frequency = 0.0f;
-    float maximum_frequency = 1000.0f;
-    float multiplier = 0.0f;
-    float frequency_resolution = (float)AUDIO_FREQUENCY / (float)(PACKET_SIZE * 3);
-    int lower_bin = (int)(minimum_frequency / frequency_resolution);
-    int upper_bin = (int)(maximum_frequency / frequency_resolution);
-    lower_bin = MAX(lower_bin - 1, 0);
-    upper_bin = MIN(upper_bin + 1, PACKET_SIZE * 3 - 1);
-
     // Modify audio in time domain
-    for (int i = lower_bin; i <= upper_bin; ++i)
-    {
-        left_fft[i] = modify_magnitude(left_fft[i], multiplier);
-        right_fft[i] = modify_magnitude(right_fft[i], multiplier);
-    }
+    int n_ranges = preferences_get_n_frequency_ranges();
+    const FrequencyRange* ranges = preferences_get_frequency_ranges();
+    for (int i = 0;  i < n_ranges; ++i)
+        modify_frequency_range(
+            ranges[i].minimum,
+            ranges[i].maximum,
+            ranges[i].multiplier
+        );
 
     // Convert back to frequency domain
     fftwf_plan inverse_plan_left = fftwf_plan_dft_c2r_1d(
@@ -151,6 +137,32 @@ static float* apply_equaliser(float* previous, float* current, float* next)
     FILL output_buffer[i * 2 + 0] = left_ifft[PACKET_SIZE + i] / (float)PACKET_SIZE / 3.0f;
     FILL output_buffer[i * 2 + 1] = right_ifft[PACKET_SIZE + i] / (float)PACKET_SIZE / 3.0f;
     return output_buffer;
+}
+
+static void modify_frequency_range(float min, float max, float multiplier)
+{
+    /*
+        Work out bins.
+
+        Because of the finite bin size, the lower bin may not be 0, even if the
+        frequency is. Likewise, the upper bin may not be the maximum it can be
+        even if the upper frequency is 20,000 Hz!
+
+        Adding a bit of leeway helps fix this for when the lower frequency is
+        0 Hz, for example.
+    */
+
+    float frequency_resolution = (float)AUDIO_FREQUENCY / (float)(PACKET_SIZE * 3);
+    int lower_bin = (int)(min / frequency_resolution);
+    int upper_bin = (int)(max / frequency_resolution);
+    lower_bin = MAX(lower_bin - 1, 0);
+    upper_bin = MIN(upper_bin + 1, PACKET_SIZE * 3 - 1);
+
+    for (int i = lower_bin; i <= upper_bin; ++i)
+    {
+        left_fft[i] = modify_magnitude(left_fft[i], multiplier);
+        right_fft[i] = modify_magnitude(right_fft[i], multiplier);
+    }
 }
 
 static float complex modify_magnitude(float complex c, float multiplier)

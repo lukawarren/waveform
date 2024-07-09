@@ -1,13 +1,6 @@
 using Gtk 4.0;
 using Adw 1;
 
-StringList visualisation_type_options {
-    strings [
-        "Frequency Domain",
-        "Time Domain"
-    ]
-}
-
 Adw.PreferencesWindow preferences_window {
     Adw.PreferencesPage {
         title: "Visualisation";
@@ -17,7 +10,12 @@ Adw.PreferencesWindow preferences_window {
             title: "General";
             Adw.ComboRow visualisation_type {
                 title: "Visualisation Type";
-                model: visualisation_type_options;
+                model: StringList {
+                    strings [
+                        "Frequency Domain",
+                        "Time Domain"
+                    ]
+                };
             }
             Adw.SpinRow gap_size {
                 title: "Gap Size";
@@ -92,6 +90,7 @@ Adw.PreferencesWindow preferences_window {
         icon-name: "audio-speakers";
 
         Adw.PreferencesGroup {
+            title: "General";
             Adw.SpinRow playback_speed {
                 title: "Playback Speed";
                 subtitle: "Does not perform pitch correction";
@@ -102,6 +101,27 @@ Adw.PreferencesWindow preferences_window {
                     step-increment: 0.125;
                 };
                 digits: 3;
+            }
+
+            Adw.SwitchRow enable_equaliser {
+                title: "Enable Equaliser";
+                subtitle: "Enables the realtime DFT equaliser";
+                activatable: false;
+            }
+        }
+
+        Adw.PreferencesGroup frequency_range_group {
+            title: "Equaliser Frequency Ranges";
+            header-suffix: Gtk.Button add_frequency_range {
+                styles ["flat"]
+                child: Adw.ButtonContent {
+                    icon-name: "list-add";
+                    label: "Add";
+                };
+            };
+            Adw.ActionRow no_frequency_ranges_row {
+                title: "No Frequency Ranges Found";
+                sensitive: false;
             }
         }
     }

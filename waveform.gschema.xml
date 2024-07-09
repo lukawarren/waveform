@@ -46,5 +46,13 @@
             <range min="0.125" max="3.0"/>
             <summary>Playback Speed</summary>
         </key>
+        <key name="equaliser-enabled" type="b">
+            <default>false</default>
+            <summary>Enable Equaliser</summary>
+            <description>Enables the realtime DFT equaliser</description>
+        </key>
+        <key name="frequency-ranges" type="a(ddd)">
+            <default>[(0, 1000, 0)]</default>
+        </key>
     </schema>
 </schemalist>

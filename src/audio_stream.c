@@ -45,7 +45,8 @@ static void on_effect_called(int, void* buffer, int length, void*)
     packet->data = (float*)buffer;
     packet->length = length / sizeof(packet->data[0]);
 
-    equaliser_process_packet(packet);
+    if (preferences_get_equaliser_enabled() && preferences_get_n_frequency_ranges() > 0)
+        equaliser_process_packet(packet);
 
     // Enqueue work to GUI thread
     g_idle_add_once(gui_idle_callback, packet);

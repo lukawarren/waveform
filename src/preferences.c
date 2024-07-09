@@ -6,12 +6,36 @@
 static GSettings* settings;
 static GObject* window;
 
+static GtkWidget* frequency_range_group;
+static GtkWidget* no_frequency_ranges_row;
+static const FrequencyRange* frequency_ranges;
+static size_t n_frequency_ranges = 0;
+
 static void on_reset_preferences(GtkButton*);
 static void on_playback_speed_changed(GtkAdjustment*, gpointer);
+
+static void add_frequency_range(float min, float max, float multiplier, int i);
 
 void init_preferences()
 {
     settings = g_settings_new("com.github.lukawarren.waveform");
+
+    GtkBuilder* builder = gtk_builder_new_from_resource("/com/github/lukawarren/waveform/src/ui/preferences.ui");
+    frequency_range_group = GET_WIDGET("frequency_range_group");
+    no_frequency_ranges_row = GET_WIDGET("no_frequency_ranges_row");
+
+    // Get initial frequency ranges
+    GVariant* variant = g_settings_get_value(settings, "frequency-ranges");
+    frequency_ranges = g_variant_get_fixed_array(variant, &n_frequency_ranges, sizeof(FrequencyRange));
+    for (gsize i = 0; i < n_frequency_ranges; ++i)
+        add_frequency_range(
+            frequency_ranges[i].minimum,
+            frequency_ranges[i].maximum,
+            frequency_ranges[i].multiplier,
+            i
+        );
+
+    g_object_unref(builder);
 }
 
 void create_preferences_window()
@@ -30,6 +54,7 @@ void create_preferences_window()
     GtkWidget* gain                 = GET_WIDGET("gain");
     GtkWidget* playback_speed       = GET_WIDGET("playback_speed");
     GtkWidget* reset_button         = GET_WIDGET("reset_button");
+    GtkWidget* enable_equaliser     = GET_WIDGET("enable_equaliser");
 
     g_settings_bind(
         settings,
@@ -95,6 +120,14 @@ void create_preferences_window()
         G_SETTINGS_BIND_DEFAULT
     );
 
+    g_settings_bind(
+        settings,
+        "equaliser-enabled",
+        enable_equaliser,
+        "active",
+        G_SETTINGS_BIND_DEFAULT
+    );
+
     GtkAdjustment* speed_adjustment = adw_spin_row_get_adjustment(ADW_SPIN_ROW(playback_speed));
     g_signal_connect(reset_button, "clicked", G_CALLBACK(on_reset_preferences), NULL);
     g_signal_connect(speed_adjustment, "value-changed", G_CALLBACK(on_playback_speed_changed), NULL);
@@ -150,6 +183,21 @@ float preferences_get_playback_speed()
     return (float)g_settings_get_double(settings, "playback-speed");
 }
 
+bool preferences_get_equaliser_enabled()
+{
+    return g_settings_get_boolean(settings, "equaliser-enabled");
+}
+
+int preferences_get_n_frequency_ranges()
+{
+    return n_frequency_ranges;
+}
+
+const FrequencyRange* preferences_get_frequency_ranges()
+{
+    return frequency_ranges;
+}
+
 static void on_reset_confirmed(GObject* self, GAsyncResult* result, gpointer)
 {
     int index = gtk_alert_dialog_choose_finish(
@@ -197,4 +245,28 @@ static void on_reset_preferences(GtkButton*)
 static void on_playback_speed_changed(GtkAdjustment* adjustment, gpointer)
 {
     set_audio_speed(gtk_adjustment_get_value(adjustment));
+}
+
+static void add_frequency_range(float min, float max, float multiplier, int i)
+{
+    GtkWidget* row = adw_expander_row_new();
+    char* title = g_strdup_printf("Range %d", i);
+    adw_preferences_row_set_title(ADW_PREFERENCES_ROW(row), title);
+
+    GtkWidget* spin_min = adw_spin_row_new_with_range(0, 24000, 1);
+    GtkWidget* spin_max = adw_spin_row_new_with_range(0, 24000, 1);
+    GtkWidget* spin_multiplier = adw_spin_row_new_with_range(0, 1, 0.01);
+    adw_spin_row_set_digits(ADW_SPIN_ROW(spin_multiplier), 2);
+
+    adw_spin_row_set_value(ADW_SPIN_ROW(spin_min), min);
+    adw_spin_row_set_value(ADW_SPIN_ROW(spin_max), max);
+    adw_spin_row_set_value(ADW_SPIN_ROW(spin_multiplier), multiplier);
+
+    adw_expander_row_add_row(ADW_EXPANDER_ROW(row), spin_min);
+    adw_expander_row_add_row(ADW_EXPANDER_ROW(row), spin_max);
+    adw_expander_row_add_row(ADW_EXPANDER_ROW(row), spin_multiplier);
+
+    adw_preferences_group_add(ADW_PREFERENCES_GROUP(frequency_range_group), row);
+
+    gtk_widget_set_visible(no_frequency_ranges_row, false);
 }
