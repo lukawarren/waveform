@@ -14,6 +14,7 @@ static size_t previous_n_ranges = 0;
 static void on_reset_preferences(GtkButton*);
 static void on_playback_speed_changed(GtkAdjustment*, gpointer);
 static void on_settings_changed(GSettings*, gchar* key, gpointer);
+static void on_equaliser_toggled(GObject* self, GParamSpec*, gpointer);
 static void on_add_frequency_range(GtkButton*);
 static void on_clear_frequency_ranges(GtkButton*);
 static void on_frequency_range_min_changed(GtkEditable*, gpointer);
@@ -140,9 +141,10 @@ void toggle_preferences_window()
     GtkAdjustment* speed_adjustment = adw_spin_row_get_adjustment(ADW_SPIN_ROW(playback_speed));
     g_signal_connect(reset_button, "clicked", G_CALLBACK(on_reset_preferences), NULL);
     g_signal_connect(speed_adjustment, "value-changed", G_CALLBACK(on_playback_speed_changed), NULL);
-
+    g_signal_connect(enable_equaliser, "notify::active", G_CALLBACK(on_equaliser_toggled), NULL);
     g_signal_connect(add_frequency_range, "clicked", G_CALLBACK(on_add_frequency_range), NULL);
     g_signal_connect(clear_frequency_ranges, "clicked", G_CALLBACK(on_clear_frequency_ranges), NULL);
+    on_equaliser_toggled(G_OBJECT(enable_equaliser), NULL, NULL);
 
     g_object_unref(builder);
     gtk_window_present(GTK_WINDOW(window));
@@ -289,6 +291,12 @@ static void on_settings_changed(GSettings*, gchar* key, gpointer)
             );
     }
     previous_n_ranges = n_frequency_ranges;
+}
+
+static void on_equaliser_toggled(GObject* self, GParamSpec*, gpointer)
+{
+    bool is_active = adw_switch_row_get_active(ADW_SWITCH_ROW(self));
+    gtk_widget_set_sensitive(frequency_range_group, is_active);
 }
 
 static void set_frequency_ranges(FrequencyRange* ranges, size_t n)
