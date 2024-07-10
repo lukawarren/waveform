@@ -1,6 +1,7 @@
 #include "preferences.h"
 #include "common.h"
 #include "audio_stream.h"
+#include "presets.h"
 #include <adwaita.h>
 
 static GSettings* settings;
@@ -11,6 +12,7 @@ static const FrequencyRange* frequency_ranges;
 static size_t n_frequency_ranges = 0;
 static size_t previous_n_ranges = 0;
 
+static void on_preferences_close(GtkWidget*);
 static void on_reset_preferences(GtkButton*);
 static void on_playback_speed_changed(GtkAdjustment*, gpointer);
 static void on_settings_changed(GSettings*, gchar* key, gpointer);
@@ -61,9 +63,14 @@ void toggle_preferences_window()
     GtkWidget* enable_equaliser         = GET_WIDGET("enable_equaliser");
     GtkWidget* add_frequency_range      = GET_WIDGET("add_frequency_range");
     GtkWidget* clear_frequency_ranges   = GET_WIDGET("clear_frequency_ranges");
+    GtkWidget* preset_menu              = GET_WIDGET("preset_menu");
 
+    // Init presets menu
+    init_presets_menu(GTK_MENU_BUTTON(preset_menu));
+
+    // Create frequency range UI
     frequency_range_group = GET_WIDGET("frequency_range_group");
-    previous_n_ranges = (size_t)-1;
+    preferences_force_frequency_range_ui_update();
     on_settings_changed(NULL, "frequency-ranges", NULL);
 
     g_settings_bind(
@@ -139,6 +146,7 @@ void toggle_preferences_window()
     );
 
     GtkAdjustment* speed_adjustment = adw_spin_row_get_adjustment(ADW_SPIN_ROW(playback_speed));
+    g_signal_connect(window, "destroy", G_CALLBACK(on_preferences_close), NULL);
     g_signal_connect(reset_button, "clicked", G_CALLBACK(on_reset_preferences), NULL);
     g_signal_connect(speed_adjustment, "value-changed", G_CALLBACK(on_playback_speed_changed), NULL);
     g_signal_connect(enable_equaliser, "notify::active", G_CALLBACK(on_equaliser_toggled), NULL);
@@ -213,6 +221,24 @@ const FrequencyRange* preferences_get_frequency_ranges()
     return frequency_ranges;
 }
 
+void preferences_set_frequency_ranges(const FrequencyRange* ranges, size_t n)
+{
+    GVariantType* type = g_variant_type_new("(ddd)");
+    GVariant* value = g_variant_new_fixed_array(
+        type,
+        ranges,
+        n,
+        sizeof(FrequencyRange)
+    );
+    g_settings_set_value(settings, "frequency-ranges", value);
+    g_variant_type_free(type);
+}
+
+void preferences_force_frequency_range_ui_update()
+{
+    previous_n_ranges = (size_t)-1;
+}
+
 static void on_reset_confirmed(GObject* self, GAsyncResult* result, gpointer)
 {
     int index = gtk_alert_dialog_choose_finish(
@@ -232,6 +258,11 @@ static void on_reset_confirmed(GObject* self, GAsyncResult* result, gpointer)
         g_settings_reset(settings, "use-bark-scale");
         g_settings_reset(settings, "gain");
     }
+}
+
+static void on_preferences_close(GtkWidget*)
+{
+    window = NULL;
 }
 
 static void on_reset_preferences(GtkButton*)
@@ -299,19 +330,6 @@ static void on_equaliser_toggled(GObject* self, GParamSpec*, gpointer)
     gtk_widget_set_sensitive(frequency_range_group, is_active);
 }
 
-static void set_frequency_ranges(FrequencyRange* ranges, size_t n)
-{
-    GVariantType* type = g_variant_type_new("(ddd)");
-    GVariant* value = g_variant_new_fixed_array(
-        type,
-        ranges,
-        n,
-        sizeof(FrequencyRange)
-    );
-    g_settings_set_value(settings, "frequency-ranges", value);
-    g_variant_type_free(type);
-}
-
 static void on_add_frequency_range(GtkButton*)
 {
     // Copy over old array
@@ -323,13 +341,13 @@ static void on_add_frequency_range(GtkButton*)
     new_frequency_ranges[n_frequency_ranges].maximum = 1000;
     new_frequency_ranges[n_frequency_ranges].multiplier = 0.05f;
 
-    set_frequency_ranges(new_frequency_ranges, n_frequency_ranges + 1);
+    preferences_set_frequency_ranges(new_frequency_ranges, n_frequency_ranges + 1);
     free(new_frequency_ranges);
 }
 
 static void on_clear_frequency_ranges(GtkButton*)
 {
-    set_frequency_ranges(NULL, 0);
+    preferences_set_frequency_ranges(NULL, 0);
 }
 
 static void apply_frequency_range_change(GtkEditable* self, size_t index, int mode)
@@ -342,7 +360,7 @@ static void apply_frequency_range_change(GtkEditable* self, size_t index, int mo
     if (mode == 1) new_ranges[index].maximum = value;
     if (mode == 2) new_ranges[index].multiplier = value;
 
-    set_frequency_ranges(new_ranges, n_frequency_ranges);
+    preferences_set_frequency_ranges(new_ranges, n_frequency_ranges);
     free(new_ranges);
 }
 
@@ -374,6 +392,7 @@ static void add_frequency_range_to_ui(float min, float max, float multiplier, in
     GtkWidget* row = adw_expander_row_new();
     char* title = g_strdup_printf("Range %d", i + 1);
     adw_preferences_row_set_title(ADW_PREFERENCES_ROW(row), title);
+    free(title);
 
     GtkWidget* spin_min = adw_spin_row_new_with_range(0, 24000, 1);
     GtkWidget* spin_max = adw_spin_row_new_with_range(0, 24000, 1);

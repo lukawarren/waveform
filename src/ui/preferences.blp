@@ -115,6 +115,10 @@ Adw.PreferencesWindow preferences_window {
 
             header-suffix: Gtk.Grid {
                 orientation: horizontal;
+                Gtk.MenuButton preset_menu {
+                    styles ["flat"]
+                    label: "Use Preset";
+                }
                 Gtk.Button add_frequency_range {
                     styles ["flat"]
                     child: Adw.ButtonContent {

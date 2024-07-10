@@ -1,5 +1,6 @@
 #pragma once
 #include <stdbool.h>
+#include <stddef.h>
 
 typedef enum VisualisationType
 {
@@ -29,3 +30,6 @@ float                   preferences_get_playback_speed();
 bool                    preferences_get_equaliser_enabled();
 int                     preferences_get_n_frequency_ranges();
 const FrequencyRange*   preferences_get_frequency_ranges();
+void                    preferences_force_frequency_range_ui_update();
+
+void preferences_set_frequency_ranges(const FrequencyRange* ranges, size_t n);

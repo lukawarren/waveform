@@ -27,7 +27,8 @@ src = [
     'src/audio_stream.c',
     'src/visualiser.c',
     'src/preferences.c',
-    'src/equaliser.c'
+    'src/equaliser.c',
+    'src/presets.c'
 ]
 include_dir = include_directories('include')
 

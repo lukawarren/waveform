@@ -5,7 +5,7 @@
 #include "preferences.h"
 #include "audio_stream.h"
 
-static void on_close(GtkApplication* app);
+static void on_close(GtkWidget* app);
 static void on_save_playlist(GSimpleAction*, GVariant*, gpointer);
 static void on_load_playlist(GSimpleAction*, GVariant*, gpointer);
 static void on_add_song(GSimpleAction*, GVariant*, gpointer);
@@ -104,7 +104,7 @@ static void on_activate(GtkApplication* app)
     g_signal_connect(window, "destroy", G_CALLBACK(on_close), NULL);
 }
 
-static void on_close(GtkApplication*)
+static void on_close(GtkWidget*)
 {
     // Destroy audio
     Mix_CloseAudio();
