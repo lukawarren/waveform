@@ -132,7 +132,7 @@ static void on_add_song(GSimpleAction*, GVariant*, gpointer)
 
 static void on_preferences_action(GSimpleAction*, GVariant*, gpointer)
 {
-    create_preferences_window();
+    toggle_preferences_window();
 }
 
 static void on_about_action(GSimpleAction*, GVariant*, gpointer window)

@@ -4,7 +4,7 @@
 #include <adwaita.h>
 
 static GSettings* settings;
-static GObject* window;
+static GObject* window = NULL;
 
 static GtkWidget* frequency_range_group;
 static const FrequencyRange* frequency_ranges;
@@ -34,12 +34,19 @@ void init_preferences()
     g_signal_connect(settings, "changed", G_CALLBACK(on_settings_changed), NULL);
 }
 
-void create_preferences_window()
+void toggle_preferences_window()
 {
+    // Close if already open
+    if (window != NULL)
+    {
+        gtk_window_close(GTK_WINDOW(window));
+        window = NULL;
+        return;
+    }
+
     GtkBuilder* builder = gtk_builder_new_from_resource("/com/github/lukawarren/waveform/src/ui/preferences.ui");
     window = gtk_builder_get_object(builder, "preferences_window");
     gtk_window_set_modal(GTK_WINDOW(window), false);
-    gtk_widget_set_visible(GTK_WIDGET(window), true);
 
     GtkWidget* visualisation_type       = GET_WIDGET("visualisation_type");
     GtkWidget* gap_size                 = GET_WIDGET("gap_size");
@@ -138,6 +145,7 @@ void create_preferences_window()
     g_signal_connect(clear_frequency_ranges, "clicked", G_CALLBACK(on_clear_frequency_ranges), NULL);
 
     g_object_unref(builder);
+    gtk_window_present(GTK_WINDOW(window));
 }
 
 void free_preferences()

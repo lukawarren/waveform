@@ -15,7 +15,7 @@ typedef struct __attribute__((__packed__)) FrequencyRange
 } FrequencyRange;
 
 void init_preferences();
-void create_preferences_window();
+void toggle_preferences_window();
 void free_preferences();
 
 int                     preferences_get_gap_size();
