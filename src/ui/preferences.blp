@@ -112,17 +112,24 @@ Adw.PreferencesWindow preferences_window {
 
         Adw.PreferencesGroup frequency_range_group {
             title: "Equaliser Frequency Ranges";
-            header-suffix: Gtk.Button add_frequency_range {
-                styles ["flat"]
-                child: Adw.ButtonContent {
-                    icon-name: "list-add";
-                    label: "Add";
-                };
+
+            header-suffix: Gtk.Grid {
+                orientation: horizontal;
+                Gtk.Button add_frequency_range {
+                    styles ["flat"]
+                    child: Adw.ButtonContent {
+                        icon-name: "list-add";
+                        label: "Add";
+                    };
+                }
+                Gtk.Button clear_frequency_ranges {
+                    styles ["flat"]
+                    child: Adw.ButtonContent {
+                        icon-name: "user-trash-symbolic";
+                        label: "Remove All";
+                    };
+                }
             };
-            Adw.ActionRow no_frequency_ranges_row {
-                title: "No Frequency Ranges Found";
-                sensitive: false;
-            }
         }
     }
 }
