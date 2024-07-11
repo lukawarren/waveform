@@ -135,11 +135,13 @@ static float get_bar_height_from_fft(
         max_index = frequency_to_fft_index(max_index_hertz);
     }
 
+#if BARK_SCALE_HIDE_ADJACENT_BARS
     // If the resolution is such that adjacent bars will be of the
     // same index (e.g. at the lower end of frequencies), only
     // draw a single bar instead of a whole ugly "block"
     if (use_bark_scale && min_index == max_index)
         return 0.0f;
+#endif
 
     // Average each "bin"
     float total = 0;
