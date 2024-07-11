@@ -1,5 +1,5 @@
 #include <adwaita.h>
-#include <SDL2/SDL_mixer.h>
+#include <SDL_mixer.h>
 #include "playlist.h"
 #include "playback.h"
 #include "common.h"

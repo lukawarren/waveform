@@ -37,9 +37,22 @@
         </key>
         <key name="gain" type="i">
             <default>0</default>
-            <range min="-1000" max="1000"/>
+            <range min="-50" max="50"/>
             <summary>Gain</summary>
             <description>Boosts perceived volume for a “less restrictive” result</description>
+        </key>
+        <key name="playback-speed" type="d">
+            <default>1.0</default>
+            <range min="0.125" max="3.0"/>
+            <summary>Playback Speed</summary>
+        </key>
+        <key name="equaliser-enabled" type="b">
+            <default>false</default>
+            <summary>Enable Equaliser</summary>
+            <description>Enables the realtime DFT equaliser</description>
+        </key>
+        <key name="frequency-ranges" type="a(ddd)">
+            <default>[(0, 1000, 0)]</default>
         </key>
     </schema>
 </schemalist>

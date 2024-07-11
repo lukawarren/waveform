@@ -1,10 +1,11 @@
 #include <adwaita.h>
+#include <fftw3.h>
 #include "playlist.h"
 #include "playback.h"
 #include "preferences.h"
 #include "audio_stream.h"
 
-static void on_close(GtkApplication* app);
+static void on_close(GtkWidget* app);
 static void on_save_playlist(GSimpleAction*, GVariant*, gpointer);
 static void on_load_playlist(GSimpleAction*, GVariant*, gpointer);
 static void on_add_song(GSimpleAction*, GVariant*, gpointer);
@@ -37,6 +38,8 @@ static GOptionEntry option_entries[] =
 
 static void on_activate(GtkApplication* app)
 {
+    fftwf_make_planner_thread_safe();
+    init_preferences();
     init_audio();
 
     // Create window
@@ -83,7 +86,6 @@ static void on_activate(GtkApplication* app)
     g_object_unref(css_provider);
 
     // Init screens
-    init_preferences();
     init_playlist_ui(builder, GTK_WINDOW(window));
     init_playback_ui(builder);
 
@@ -102,7 +104,7 @@ static void on_activate(GtkApplication* app)
     g_signal_connect(window, "destroy", G_CALLBACK(on_close), NULL);
 }
 
-static void on_close(GtkApplication*)
+static void on_close(GtkWidget*)
 {
     // Destroy audio
     Mix_CloseAudio();
@@ -130,7 +132,7 @@ static void on_add_song(GSimpleAction*, GVariant*, gpointer)
 
 static void on_preferences_action(GSimpleAction*, GVariant*, gpointer)
 {
-    create_preferences_window();
+    toggle_preferences_window();
 }
 
 static void on_about_action(GSimpleAction*, GVariant*, gpointer window)

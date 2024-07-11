@@ -1,13 +1,14 @@
 #pragma once
 #include <stdbool.h>
-#include <SDL2/SDL_mixer.h>
 #include "playlist.h"
+#include <SDL_mixer.h>
 
 typedef struct AudioStream
 {
     bool is_playing;
     Mix_Music* music;
     PlaylistEntry* playlist_entry;
+    double fade_pos;
 } AudioStream;
 
 typedef struct AudioPacket
@@ -24,4 +25,5 @@ void free_audio_stream(AudioStream* stream);
 void init_audio();
 void mute_audio();
 void unmute_audio();
+void set_audio_speed(float speed);
 void close_audio();

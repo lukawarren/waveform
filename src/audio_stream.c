@@ -1,6 +1,8 @@
 #include "audio_stream.h"
 #include "playback.h"
 #include "common.h"
+#include "preferences.h"
+#include "equaliser.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <adwaita.h>
@@ -20,13 +22,12 @@ AudioStream* create_audio_stream(PlaylistEntry* entry)
     stream->is_playing = false;
     stream->playlist_entry = entry;
     stream->music = Mix_LoadMUS(entry->path);
+    stream->fade_pos = 0.0f;
 
     if (stream->music == NULL)
         g_critical("failed to load %s", entry->path);
 
-    else
-        Mix_PlayMusic(stream->music, 0);
-
+    Mix_PlayMusic(stream->music, 0);
     return stream;
 }
 
@@ -34,17 +35,20 @@ static void gui_idle_callback(gpointer audio_packet)
 {
     AudioPacket* packet = (AudioPacket*)audio_packet;
     on_audio_stream_advanced(packet);
-    free(packet->data);
     free(packet);
 }
 
 static void on_effect_called(int, void* buffer, int length, void*)
 {
-    // Enqueue work to GUI thread
+    // Create packet
     AudioPacket* packet = malloc(sizeof(AudioPacket));
-    packet->data = malloc(length);
-    memcpy(packet->data, buffer, length);
+    packet->data = (float*)buffer;
     packet->length = length / sizeof(packet->data[0]);
+
+    if (preferences_get_equaliser_enabled() && preferences_get_n_frequency_ranges() > 0)
+        equaliser_process_packet(packet);
+
+    // Enqueue work to GUI thread
     g_idle_add_once(gui_idle_callback, packet);
 
     // Simulate being muted
@@ -113,6 +117,10 @@ void init_audio()
     );
 #endif
 
+    Mix_SetSpeed(preferences_get_playback_speed());
+
+    equaliser_init();
+
     float fps = (float)AUDIO_FREQUENCY / (float)PACKET_SIZE;
     printf("running at approx. %.2f FPS\n", fps);
 }
@@ -130,7 +138,13 @@ void unmute_audio()
     muted = false;
 }
 
+void set_audio_speed(float speed)
+{
+    Mix_SetSpeed(speed);
+}
+
 void close_audio()
 {
+    equaliser_destroy();
     Mix_CloseAudio();
 }

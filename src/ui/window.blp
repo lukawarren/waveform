@@ -117,21 +117,18 @@ Adw.Window window {
                         Gtk.ScrolledWindow playlist_page {
                             Gtk.Viewport {
                                 scroll-to-focus: false;
-                                Gtk.Box {
-                                    orientation: vertical;
-                                    Adw.Clamp {
-                                        margin-start: 6;
-                                        margin-end: 6;
-                                        margin-top: 6;
-                                        margin-bottom: 6;
+                                Adw.Clamp {
+                                    margin-start: 6;
+                                    margin-end: 6;
+                                    margin-top: 6;
+                                    margin-bottom: 6;
 
-                                        valign: center;
-                                        vexpand: true;
+                                    valign: center;
+                                    vexpand: true;
 
-                                        Gtk.ListBox playlist_list {
-                                            selection-mode: none;
-                                            styles ["boxed-list"]
-                                        }
+                                    Gtk.ListBox playlist_list {
+                                        selection-mode: none;
+                                        styles ["boxed-list"]
                                     }
                                 }
                             }
