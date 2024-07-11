@@ -28,7 +28,8 @@ src = [
     'src/visualiser.c',
     'src/preferences.c',
     'src/equaliser.c',
-    'src/presets.c'
+    'src/presets.c',
+    'src/dbus.c'
 ]
 include_dir = include_directories('include')
 

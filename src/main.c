@@ -4,6 +4,7 @@
 #include "playback.h"
 #include "preferences.h"
 #include "audio_stream.h"
+#include "dbus.h"
 
 static void on_close(GtkWidget* app);
 static void on_save_playlist(GSimpleAction*, GVariant*, gpointer);
@@ -41,6 +42,7 @@ static void on_activate(GtkApplication* app)
     fftwf_make_planner_thread_safe();
     init_preferences();
     init_audio();
+    init_dbus();
 
     // Create window
     GtkBuilder* builder = gtk_builder_new_from_resource("/com/github/lukawarren/waveform/src/ui/window.ui");
@@ -106,8 +108,8 @@ static void on_activate(GtkApplication* app)
 
 static void on_close(GtkWidget*)
 {
-    // Destroy audio
     Mix_CloseAudio();
+    close_dbus();
 
     // Destroy UI
     destroy_playlist_ui();
