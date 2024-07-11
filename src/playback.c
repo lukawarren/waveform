@@ -211,7 +211,9 @@ void update_playback()
 
 void toggle_playback()
 {
-    on_play(NULL);
+    // May be null if called from D-Bus
+    if (audio_stream != NULL)
+        on_play(NULL);
 }
 
 void set_new_playback_entry(PlaylistEntry* entry)
@@ -244,4 +246,23 @@ void on_audio_stream_advanced(AudioPacket* packet)
     // Go to next song when this one finishes
     if (progress >= 1.0)
         on_forwards(NULL);
+}
+
+void playback_next()
+{
+    // Called from D-Bus so might not make sense
+    if (g_list_length(playlist) > 0)
+        on_forwards(NULL);
+}
+
+void playback_previous()
+{
+    // Called from D-Bus so might not make sense
+    if (g_list_length(playlist) > 0)
+        on_backwards(NULL);
+}
+
+bool playback_is_playing()
+{
+    return audio_stream->is_playing;
 }

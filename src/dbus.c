@@ -1,6 +1,13 @@
 #include "dbus.h"
+#include "preferences.h"
+#include "playback.h"
 #include <gio/gio.h>
 #include <adwaita.h>
+
+/*
+    Loosely implements MPRIS - https://specifications.freedesktop.org/mpris-spec/2.2/.
+    Tested on GNOME but not guaranteed to work on KDE, etc. as various stubs.
+*/
 
 static void on_bus_acquired(GDBusConnection* connection, const gchar* name, gpointer);
 
@@ -25,14 +32,21 @@ static GVariant* on_get_property(
     gpointer user_data
 );
 
+static GVariant* new_metadata_string(const char* key, const char* value);
+static GVariant* get_metadata_for_current_entry();
+static GVariant* get_playback_status_variant();
+
 static const GDBusInterfaceVTable interface_vtable =
 {
     on_method_call,
     on_get_property,
-    NULL
+    NULL,
+    { 0 }
 };
 
 static guint owner_id = 0;
+static const PlaylistEntry* current_entry = NULL;
+static GDBusConnection* connection;
 
 void init_dbus()
 {
@@ -49,8 +63,10 @@ void init_dbus()
     );
 }
 
-static void on_bus_acquired(GDBusConnection* connection, const gchar* name, gpointer)
+static void on_bus_acquired(GDBusConnection* _connection, const gchar*, gpointer)
 {
+    connection = _connection;
+
     // Load introspection XML
     GBytes* resource = g_resources_lookup_data(
         "/com/github/lukawarren/waveform/waveform.dbus.xml",
@@ -115,7 +131,29 @@ static void on_method_call(
     gpointer user_data
 )
 {
-    printf("bob\n");
+    (void)connection;
+    (void)sender;
+    (void)object_path;
+    (void)parameters;
+    (void)invocation;
+    (void)user_data;
+
+    if (strcmp(interface_name, "org.mpris.MediaPlayer2.Player") == 0)
+    {
+        if (strcmp(method_name, "Previous") == 0)
+            playback_previous();
+
+        else if (strcmp(method_name, "Next") == 0)
+            playback_next();
+
+        else if (strcmp(method_name, "PlayPause") == 0)
+            toggle_playback();
+
+        else
+            g_warning("unsupported method %s\n", method_name);
+    }
+    else
+        g_warning("unsupported interface %s\n", interface_name);
 }
 
 static GVariant* on_get_property(
@@ -129,6 +167,12 @@ static GVariant* on_get_property(
 )
 {
     #define PROPERTY(x) (strcmp(property_name, x) == 0)
+
+    (void)connection;
+    (void)sender;
+    (void)object_path;
+    (void)error;
+    (void)user_data;
 
     if (strcmp(interface_name, "org.mpris.MediaPlayer2") == 0)
     {
@@ -156,9 +200,11 @@ static GVariant* on_get_property(
 
     else if (strcmp(interface_name, "org.mpris.MediaPlayer2.Player") == 0)
     {
+        // TODO: add signal on change
         if (PROPERTY("PlaybackStatus"))
-            return g_variant_new_string("Paued");
+            return get_playback_status_variant();
 
+        // TODO: add signal on change
         if (PROPERTY("Rate"))
             return g_variant_new_double(1.0);
 
@@ -168,11 +214,12 @@ static GVariant* on_get_property(
         if (PROPERTY("MaximumRate"))
             return g_variant_new_double(1.0);
 
+        // TODO: add signal on change
         if (PROPERTY("Volume"))
             return g_variant_new_double(1.0);
 
         if (PROPERTY("Metadata"))
-            return NULL;
+            return get_metadata_for_current_entry();
 
         if (PROPERTY("Position"))
             return 0;
@@ -204,6 +251,110 @@ static GVariant* on_get_property(
         g_warning("unknown D-Bus interface %s", interface_name);
         return NULL;
     }
+}
+
+static GVariant* new_metadata_string(const char* key, const char* value)
+{
+    return g_variant_new_dict_entry(
+        g_variant_new_string(key),
+        g_variant_new_variant(g_variant_new_string(value))
+    );
+}
+
+static GVariant* get_metadata_for_current_entry()
+{
+    if (current_entry == NULL)
+    {
+        GVariant* entries[] = {
+            new_metadata_string("mpris:trackid", "/org/mpris/MediaPlayer2/CurrentTrack")
+        };
+        return g_variant_new_array(G_VARIANT_TYPE("{sv}"), entries, 1);
+    }
+    else
+    {
+        GVariant* artist_string = g_variant_new_string(current_entry->artist);
+        GVariant* artist_array = g_variant_new_array(G_VARIANT_TYPE_STRING, &artist_string, 1);
+
+        GVariant* entries[] = {
+            new_metadata_string("mpris:trackid", "/org/mpris/MediaPlayer2/CurrentTrack"),
+            new_metadata_string("xesam:title", current_entry->name),
+            g_variant_new_dict_entry(
+                g_variant_new_string("xesam:artist"),
+                g_variant_new_variant(artist_array)
+            )
+        };
+
+        return g_variant_new_array(G_VARIANT_TYPE("{sv}"), entries, 3);
+    }
+}
+
+static GVariant* get_playback_status_variant()
+{
+    if (current_entry == NULL)
+        return g_variant_new_string("Stopped");
+
+    else if (playback_is_playing())
+        return g_variant_new_string("Playing");
+
+    else
+        return g_variant_new_string("Paused");
+}
+
+static void send_properties_changed_signal(GVariant* changed_properties)
+{
+    if (connection == NULL)
+    {
+        // D-Bus connection hasn't started yet, so the new entry will
+        // simply be queried above instead.
+        return;
+    }
+
+    // There aren't any invalidated properties
+    GVariantBuilder invalidated_builder;
+    g_variant_builder_init(&invalidated_builder, G_VARIANT_TYPE("as"));
+    GVariant* invalidated_properties = g_variant_builder_end(&invalidated_builder);
+
+    // Final properties variant
+    GVariant* parameters = g_variant_new(
+        "(s@a{sv}@as)",
+        "org.mpris.MediaPlayer2.Player",
+        changed_properties,
+        invalidated_properties
+    );
+
+    g_dbus_connection_emit_signal(
+        connection,
+        NULL,
+        "/org/mpris/MediaPlayer2",
+        "org.freedesktop.DBus.Properties",
+        "PropertiesChanged",
+        parameters,
+        NULL
+    );
+}
+
+void dbus_set_current_playlist_entry(PlaylistEntry* entry)
+{
+    current_entry = entry;
+    GVariant* metadata = get_metadata_for_current_entry();
+
+    GVariantBuilder builder;
+    g_variant_builder_init(&builder, G_VARIANT_TYPE("a{sv}"));
+    g_variant_builder_add(&builder, "{sv}", "Metadata", metadata);
+    send_properties_changed_signal(g_variant_builder_end(&builder));
+}
+
+void dbus_on_playback_toggled()
+{
+    GVariantBuilder builder;
+    g_variant_builder_init(&builder, G_VARIANT_TYPE("a{sv}"));
+    g_variant_builder_add(
+        &builder,
+        "{sv}",
+        "PlaybackStatus",
+        get_playback_status_variant()
+    );
+    send_properties_changed_signal(g_variant_builder_end(&builder));
 }
 
 void close_dbus()

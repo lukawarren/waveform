@@ -1,10 +1,11 @@
 #include "audio_stream.h"
-#include "playback.h"
-#include "common.h"
 #include "preferences.h"
 #include "equaliser.h"
-#include <stdlib.h>
+#include "playback.h"
+#include "common.h"
+#include "dbus.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <adwaita.h>
 #include <SDL2/SDL.h>
 
@@ -28,6 +29,10 @@ AudioStream* create_audio_stream(PlaylistEntry* entry)
         g_critical("failed to load %s", entry->path);
 
     Mix_PlayMusic(stream->music, 0);
+
+    // Playback has begun; inform D-Bus
+    dbus_set_current_playlist_entry(entry);
+
     return stream;
 }
 
@@ -80,6 +85,9 @@ void toggle_audio_stream(AudioStream* stream)
     #endif
         Mix_PauseMusic();
     }
+
+    // Update D-Bus
+    dbus_on_playback_toggled();
 }
 
 void set_audio_stream_progress(AudioStream* stream, double progress)

@@ -3,6 +3,7 @@
 #include "playlist.h"
 #include "playback.h"
 #include "common.h"
+#include "dbus.h"
 
 GList* playlist = NULL;
 
@@ -21,6 +22,10 @@ static void update_stack()
         ADW_VIEW_STACK(playlist_stack),
         length == 0 ? empty_page : playlist_page
     );
+
+    // Update D-Bus if no current entry
+    if (length == 0)
+        dbus_set_current_playlist_entry(NULL);
 }
 
 static void free_playlist_entry(void* entry)
