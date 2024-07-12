@@ -356,6 +356,9 @@ void init_playlist_ui(GtkBuilder* builder, GtkWindow* _window)
     // Clear button
     GtkWidget* playlist_clear_button = GET_WIDGET("playlist_clear_button");
     g_signal_connect(playlist_clear_button, "clicked", G_CALLBACK(on_playlist_clear), NULL);
+
+    // Shuffle
+    srand(time(NULL));
 }
 
 void destroy_playlist_ui()
