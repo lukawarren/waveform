@@ -536,4 +536,8 @@ void add_file_with_path(const char* path)
     GFile* file = g_file_new_for_path(path);
     add_file_to_playlist(file);
     g_object_unref(file);
+
+    // Update UI
+    update_stack();
+    update_playback();
 }
