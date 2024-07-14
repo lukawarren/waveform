@@ -23,18 +23,19 @@ static const GActionEntry app_actions[] =
 };
 
 // Command line arguments
-static char* playlist_argument;
+static gchar** input_filenames = NULL;
 static GOptionEntry option_entries[] =
 {
     {
-        "playlist",
-        'p',
+        G_OPTION_REMAINING,
         0,
-        G_OPTION_ARG_FILENAME,
-        &playlist_argument,
-        "Specify playlist to load at startup",
-        NULL
-    }
+        0,
+        G_OPTION_ARG_FILENAME_ARRAY,
+        &input_filenames,
+        NULL,
+        "[PLAYLISTS AND/OR FILES]"
+    },
+    { NULL }
 };
 
 static void on_activate(GtkApplication* app)
@@ -96,10 +97,25 @@ static void on_activate(GtkApplication* app)
     g_object_unref(builder);
 
     // Use command line arguments, if any
-    if (playlist_argument != NULL)
+    if (input_filenames != NULL)
     {
-        load_playlist_with_path(playlist_argument);
-        free(playlist_argument);
+        int i = 0;
+        while (input_filenames[i] != NULL)
+        {
+            char* filename = input_filenames[i++];
+            size_t length = strlen(filename);
+
+            // If it ends in .waveform, presume it's a playlist
+            static const size_t extension_length = 9; // strlen(".waveform")
+            if (length >= extension_length &&
+                strcmp(filename + length - extension_length, ".waveform") == 0)
+                add_playlist_with_path(filename);
+
+            else
+                add_file_with_path(filename);
+        }
+
+        g_strfreev(input_filenames);
     }
 
     // Memory clean-up

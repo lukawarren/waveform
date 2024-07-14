@@ -428,15 +428,17 @@ static void on_save_dialog_done(GObject* self, GAsyncResult* result, gpointer)
     g_object_unref(file);
 }
 
-static bool load_playlist_from_file(GFile* file)
+static bool load_playlist_from_file(GFile* file, bool delete_old_playlist)
 {
     GFileInputStream* stream = g_file_read(file, NULL, NULL);
     if (stream != NULL)
     {
-        // Delete old playlist
-        g_list_free_full(playlist, free_playlist_entry);
-        playlist = NULL;
-        gtk_list_box_remove_all(GTK_LIST_BOX(playlist_list));
+        if (delete_old_playlist)
+        {
+            g_list_free_full(playlist, free_playlist_entry);
+            playlist = NULL;
+            gtk_list_box_remove_all(GTK_LIST_BOX(playlist_list));
+        }
 
         // Read each line
         GDataInputStream* data_stream = g_data_input_stream_new(G_INPUT_STREAM(stream));
@@ -481,7 +483,7 @@ static void on_load_dialog_done(GObject* self, GAsyncResult* result, gpointer)
     GFile* file = gtk_file_dialog_open_finish(GTK_FILE_DIALOG(self), result, NULL);
     if (file != NULL)
     {
-        load_playlist_from_file(file);
+        load_playlist_from_file(file, true);
         g_object_unref(file);
     }
 }
@@ -521,10 +523,17 @@ void on_playlist_load()
     gtk_file_dialog_open(dialog, window, NULL, on_load_dialog_done, NULL);
 }
 
-void load_playlist_with_path(const char* path)
+void add_playlist_with_path(const char* path)
 {
     GFile* file = g_file_new_for_path(path);
-    if (!load_playlist_from_file(file))
+    if (!load_playlist_from_file(file, false))
         g_critical("failed to load playlist %s", path);
+    g_object_unref(file);
+}
+
+void add_file_with_path(const char* path)
+{
+    GFile* file = g_file_new_for_path(path);
+    add_file_to_playlist(file);
     g_object_unref(file);
 }

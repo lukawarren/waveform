@@ -16,4 +16,6 @@ void set_current_playlist_entry(PlaylistEntry* entry, bool is_playing);
 void on_playlist_entry_add(GtkButton*);
 void on_playlist_save();
 void on_playlist_load();
-void load_playlist_with_path(const char* path);
+
+void add_playlist_with_path(const char* path);
+void add_file_with_path(const char* path);
