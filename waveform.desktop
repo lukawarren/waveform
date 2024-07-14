@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Waveform
+Comment=Lightweight music player and visualiser
+Exec=/usr/bin/waveform %F
+Icon=com.github.lukawarren.waveform
+Keywords=audio;music;visualiser;visualizer;
+StartupNotify=true
+Terminal=false
+MimeType=application/waveform-playlist;application/x-ogg;application/ogg;audio/x-mp3;audio/x-mpeg;audio/mpeg;audio/wav;audio/*;
+Type=Application

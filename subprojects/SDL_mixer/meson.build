@@ -56,7 +56,7 @@ sources = files(
   'src/utils.c',
 )
 
-sdl2_mixer_lib = library(
+sdl2_mixer_lib = static_library(
   'sdl2mixer_custom',
   sources,
   c_args: feature_args,
@@ -66,7 +66,7 @@ sdl2_mixer_lib = library(
 
 sdl2_mixer_dep = declare_dependency(
   include_directories: incdirs,
-  link_with: sdl2_mixer_lib,
+  link_with: sdl2_mixer_lib
 )
 
 meson.override_dependency('sdl2_mixer_custom', sdl2_mixer_dep)
