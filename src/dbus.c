@@ -222,7 +222,7 @@ static GVariant* on_get_property(
             return get_metadata_for_current_entry();
 
         if (PROPERTY("Position"))
-            return 0;
+            return g_variant_new_uint16(0);
 
         if (PROPERTY("CanGoNext"))
             return g_variant_new_boolean(true);
