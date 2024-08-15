@@ -2,7 +2,7 @@
 Lightweight GTK 4 and libadwaita audio visualiser written in C.
 Rewrite of [A-Level coursework](https://github.com/lukawarren/realtime-audio-processor).
 
-![The program visualising music](screenshots/waveform.png)
+![The program visualising music](screenshots/light-mode.png)
 
 ## Building
 ```
