@@ -10,13 +10,13 @@ project(
 
 # Dependencies
 cc = meson.get_compiler('c')
-maths_dep = cc.find_library('m', required : false)
+maths_dep = cc.find_library('m', required: false)
 gtk4_dep = dependency('gtk4', version: '>= 4.0')
 libadwaita_dep = dependency('libadwaita-1', version: '>= 1.0')
 sdl2_dep = dependency('sdl2', version: '>= 2.0.0')
 sdl2mixer_dep = dependency('sdl2_mixer_custom', version: '>= 2.0.0')
 fftw_dep = dependency('fftw3f')
-fftw_threads_dep = cc.find_library('fftw3f_threads')
+fftw_threads_dep = cc.find_library('fftw3f_threads', required: false)
 gnome = import('gnome')
 
 # Sources

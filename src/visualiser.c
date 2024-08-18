@@ -290,10 +290,12 @@ void visualiser_init(GtkWidget* widget)
     for (int i = 0; i < N_FRAMES; ++i)
         processed_frames[i] = calloc(FRAME_SIZE, sizeof(float));
 
-    // Setup UI
+    // Setup UI - macOS dark mode stubbed unsupported for now
     GtkSettings* settings = gtk_settings_get_default();
+#ifndef __APPLE__
     g_signal_connect(settings, "notify::gtk-application-prefer-dark-theme", G_CALLBACK(on_theme_changed), widget);
     on_theme_changed(NULL, NULL, widget);
+#endif
 }
 
 void visualiser_set_data(AudioPacket* packet)

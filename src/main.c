@@ -40,10 +40,17 @@ static GOptionEntry option_entries[] =
 
 static void on_activate(GtkApplication* app)
 {
+    // homebrew's fftw doesn't seem to include fftwf
+#ifndef __APPLE__
     fftwf_make_planner_thread_safe();
+#endif
+
     init_preferences();
     init_audio();
+
+#ifndef __APPLE__
     init_dbus();
+#endif
 
     // Create window
     GtkBuilder* builder = gtk_builder_new_from_resource("/com/github/lukawarren/waveform/src/ui/window.ui");
