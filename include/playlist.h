@@ -4,7 +4,9 @@
 typedef struct PlaylistEntry
 {
     const gchar* name;
+    const gchar* unescaped_name;
     const gchar* artist;
+    const gchar* unescaped_artist;
     const gchar* path;
 } PlaylistEntry;
 extern GList* playlist;

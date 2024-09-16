@@ -272,12 +272,12 @@ static GVariant* get_metadata_for_current_entry()
     }
     else
     {
-        GVariant* artist_string = g_variant_new_string(current_entry->artist);
+        GVariant* artist_string = g_variant_new_string(current_entry->unescaped_artist);
         GVariant* artist_array = g_variant_new_array(G_VARIANT_TYPE_STRING, &artist_string, 1);
 
         GVariant* entries[] = {
             new_metadata_string("mpris:trackid", "/org/mpris/MediaPlayer2/CurrentTrack"),
-            new_metadata_string("xesam:title", current_entry->name),
+            new_metadata_string("xesam:title", current_entry->unescaped_name),
             g_variant_new_dict_entry(
                 g_variant_new_string("xesam:artist"),
                 g_variant_new_variant(artist_array)

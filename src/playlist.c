@@ -31,7 +31,9 @@ static void update_stack()
 static void free_playlist_entry(void* entry)
 {
     g_free((void*)((PlaylistEntry*)entry)->name);
+    g_free((void*)((PlaylistEntry*)entry)->unescaped_name);
     g_free((void*)((PlaylistEntry*)entry)->artist);
+    g_free((void*)((PlaylistEntry*)entry)->unescaped_artist);
     g_free((void*)((PlaylistEntry*)entry)->path);
     free(entry);
 }
@@ -178,12 +180,20 @@ static GtkWidget* create_ui_playlist_entry(PlaylistEntry* playlist_entry)
     return entry;
 }
 
-static void add_playlist_entry(const char* name, const gchar* artist, const gchar* path)
+static void add_playlist_entry(
+    const gchar* name,
+    const gchar* unescaped_name,
+    const gchar* artist,
+    const gchar* unescaped_artist,
+    const gchar* path
+)
 {
     // Add to playlist
     PlaylistEntry* entry = malloc(sizeof(PlaylistEntry));
     entry->name = name;
+    entry->unescaped_name = unescaped_name;
     entry->artist = artist;
+    entry->unescaped_artist = unescaped_artist;
     entry->path = path;
     playlist = g_list_append(playlist, entry);
 
@@ -226,12 +236,10 @@ static bool add_file_to_playlist(GFile* file)
     // Sanitise for escape sequences
     gchar* name_s = g_markup_escape_text(name, -1);
     gchar* artist_s = g_markup_escape_text(artist, -1);
-    free(name);
-    free(artist);
     Mix_FreeMusic(music);
 
     // Add to program
-    add_playlist_entry(name_s, artist_s, file_path);
+    add_playlist_entry(name_s, name, artist_s, artist, file_path);
     return true;
 }
 
