@@ -270,6 +270,7 @@ void visualiser_draw_function(
 
 static void on_theme_changed(GObject*, GParamSpec*, gpointer data)
 {
+#ifndef __APPLE__
     bool is_dark_mode;
     GtkSettings* settings = gtk_settings_get_default();
     g_object_get(G_OBJECT(settings), "gtk-application-prefer-dark-theme", &is_dark_mode, NULL);
@@ -278,6 +279,13 @@ static void on_theme_changed(GObject*, GParamSpec*, gpointer data)
         is_dark_mode ? "fully-bright-colour" : "fully-dark-colour",
         NULL
     };
+#else
+    // Dark-mode unsupported (see main.c) - TODO: use AdwStyleManager
+    const char* classes[] = {
+        "fully-dark-colour",
+        NULL
+    };
+#endif
 
     GtkWidget* widget = (GtkWidget*)data;
     gtk_widget_set_css_classes(widget, classes);
@@ -291,11 +299,11 @@ void visualiser_init(GtkWidget* widget)
         processed_frames[i] = calloc(FRAME_SIZE, sizeof(float));
 
     // Setup UI - macOS dark mode stubbed unsupported for now
-    GtkSettings* settings = gtk_settings_get_default();
 #ifndef __APPLE__
+    GtkSettings* settings = gtk_settings_get_default();
     g_signal_connect(settings, "notify::gtk-application-prefer-dark-theme", G_CALLBACK(on_theme_changed), widget);
-    on_theme_changed(NULL, NULL, widget);
 #endif
+    on_theme_changed(NULL, NULL, widget);
 }
 
 void visualiser_set_data(AudioPacket* packet)

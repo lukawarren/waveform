@@ -50,6 +50,12 @@ static void on_activate(GtkApplication* app)
 
 #ifndef __APPLE__
     init_dbus();
+#else
+    // Force light mode as awkward to detect dark mode
+    adw_style_manager_set_color_scheme(
+        adw_style_manager_get_default(),
+        ADW_COLOR_SCHEME_FORCE_LIGHT
+    );
 #endif
 
     // Create window
