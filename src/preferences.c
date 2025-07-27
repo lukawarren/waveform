@@ -30,6 +30,12 @@ void init_preferences()
 {
     settings = g_settings_new("com.github.lukawarren.waveform");
 
+    // Force GNOME font on Windows (presume installed)
+#ifdef _WIN32
+    GtkSettings* gtk_settings = gtk_settings_get_for_display(gdk_display_get_default());
+    g_object_set(gtk_settings, "gtk-font-name", "Cantarell", NULL);
+#endif
+
     // Get initial frequency ranges
     GVariant* variant = g_settings_get_value(settings, "frequency-ranges");
     frequency_ranges = g_variant_get_fixed_array(variant, &n_frequency_ranges, sizeof(FrequencyRange));

@@ -59,5 +59,6 @@ executable(
     schemas,
     dependencies: [maths_dep, gtk4_dep, libadwaita_dep, sdl2_dep, sdl2mixer_dep, fftw_dep, fftw_threads_dep],
     include_directories: include_dir,
-    install: false
+    install: false,
+    win_subsystem: 'windows'
 )
